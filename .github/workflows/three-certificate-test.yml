@@ -1,0 +1,48 @@
+name: Three-certificate compatibility test
+
+on:
+  push:
+    branches: [test/multisign-compat]
+    paths: [.github/workflows/three-certificate-test.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  resign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the previously built custom APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh run download 41846062518 --repo "$GITHUB_REPOSITORY" --name NekokoLPA-custom-apk --dir dist
+          find dist -type f -name '*.apk' -ls
+      - name: Sign with the three public certificates
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find dist -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          OUTPUT="$PWD/dist/NekokoLPA-custom-3sign-arm64.apk"
+          # Keep the first three signers from the upstream public multisign script.
+          sed -n '/^java -jar apksigner.jar sign/,/--next-signer --ks signer\/keys\/9esim.jks/p' variants/multisign/signing.sh > dist/sign-three.sh
+          printf '  --out "%s" "%s"\n' "$OUTPUT" "$APK" >> dist/sign-three.sh
+          bash dist/sign-three.sh
+          java -jar apksigner.jar verify --verbose --print-certs "$OUTPUT"
+      - name: Publish an experimental pre-release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.14.401-custom-3sign-test1 \
+            dist/NekokoLPA-custom-3sign-arm64.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target test/multisign-compat \
+            --title "NekokoLPA - three-signature experimental build" \
+            --notes "Compatibility test only. Re-signed the existing custom APK using three publicly available certificates from upstream. It lacks the other two signers present in the official multi-signed release. OMAPI access is not guaranteed. Real-device installation and eSIM switching have not been verified; do not delete your SIM profiles." \
+            --prerelease
