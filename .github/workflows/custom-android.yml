@@ -24,8 +24,11 @@ jobs:
           node-version: '24'
       - name: Configure Android SDK
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" "build-tools;37.0.0"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses < /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
+      - name: Use available Android SDK 36 for CI
+        run: |
+          sed -i 's/compileSdkVersion = 37/compileSdkVersion = 36/g; s/buildToolsVersion = "37.0.0"/buildToolsVersion = "36.0.0"/g' android/build.gradle
       - name: Install dependencies
         run: |
           corepack enable
