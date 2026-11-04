@@ -1,9 +1,9 @@
 import React from 'react';
-import {Linking, Platform, TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import Screen from '@/shared/ui/Screen';
 import type {RootScreenProps} from '@/app/navigation/types';
-import {Text as TText, useTheme, XStack, YStack} from 'tamagui';
+import {Text as TText, XStack, YStack} from 'tamagui';
 import {
   Languages,
   Moon,
@@ -27,15 +27,8 @@ import type {SettingRow} from '@/features/settings/types';
 import {DEFAULT_THEME_COLOR} from '@/shared/theme/presetColors';
 import SectionLabel from '@/shared/ui/SectionLabel';
 import RowGroup, {Row} from '@/shared/ui/RowGroup';
-import {
-  AppBuyLink,
-  AppVersion,
-  DisplayGithubLink,
-  GithubLink,
-  NekokoLPA2Link,
-} from '@/shared/config/app';
-import {fontFamily, fontSize, iconSize} from '@/shared/theme/tokens';
-import {ExternalLink} from '@tamagui/lucide-icons';
+import {AppVersion} from '@/shared/config/app';
+import {fontFamily, fontSize} from '@/shared/theme/tokens';
 
 /** Which rows belong to which section, in display order. */
 const SECTIONS = [
@@ -84,27 +77,8 @@ const SettingsSection = ({
   );
 };
 
-/**
- * Outbound links, kept together under About.
- *
- * These used to live in the side menu, which is gone. Settings is where people
- * look for "where do I report this" and "where is the source", so they belong
- * here rather than only as footnotes under the profile list.
- */
-const ABOUT_LINKS = [
-  ...(DisplayGithubLink && GithubLink
-    ? [
-        {key: 'main:settings_report_bug', onPress: () => Linking.openURL(`${GithubLink}/issues`)},
-        {key: 'main:settings_source', onPress: () => Linking.openURL(GithubLink)},
-      ]
-    : []),
-  {key: 'main:settings_buy_device', onPress: () => Linking.openURL(AppBuyLink)},
-  {key: 'main:nekokolpa2', onPress: () => Linking.openURL(NekokoLPA2Link)},
-];
-
 export default function Settings(_props: RootScreenProps<'Settings'>) {
   const {t} = useTranslation(['main']);
-  const theme = useTheme();
   const {setTheme} = useColorScheme();
 
   const keysToHide = isSimplifiedMode() ? SIMPLIFIED_HIDDEN_KEYS : [];
@@ -228,18 +202,6 @@ export default function Settings(_props: RootScreenProps<'Settings'>) {
                 </TText>
               </XStack>
             </Row>
-            {ABOUT_LINKS.map(item => (
-              <TouchableOpacity key={item.key} activeOpacity={0.6} onPress={item.onPress}>
-                <Row>
-                  <XStack alignItems="center" gap={12}>
-                    <TText flex={1} color="$textDefault" fontSize={fontSize.lg}>
-                      {t(item.key)}
-                    </TText>
-                    <ExternalLink size={iconSize.sm} color={theme.color9?.val as string} />
-                  </XStack>
-                </Row>
-              </TouchableOpacity>
-            ))}
           </RowGroup>
         </YStack>
       </YStack>

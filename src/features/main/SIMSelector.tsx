@@ -8,7 +8,6 @@ import SlotTabs from '@/features/main/components/SlotTabs';
 import BluetoothSheet from '@/features/bluetooth/BluetoothSheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {preferences} from '@/shared/storage';
-import PurchaseLinks from '@/shared/ui/PurchaseLinks';
 
 import {useAppDispatch, useAppSelector, selectDeviceList} from '@/store';
 import {setTargetDevice} from '@/store/slices';
@@ -95,7 +94,6 @@ export default function SIMSelector() {
                 </TText>
               </XStack>
             </TouchableOpacity>
-            <PurchaseLinks />
           </YStack>
         </ScrollView>
       ) : (
@@ -128,8 +126,7 @@ export default function SIMSelector() {
                   <ProfileCardHeader deviceId={selected} />
                   <ProfileSelector deviceId={selected} />
                   {/* Footnotes to the list, not a call to action above it. */}
-                  <PurchaseLinks />
-                </YStack>
+                      </YStack>
               ) : (
                 <ScrollView bounces alwaysBounceVertical overScrollMode="always">
                   <YStack flex={1} paddingTop={20} gap={10}>
@@ -181,8 +178,7 @@ export default function SIMSelector() {
                         {t('main:open_stk_menu')}
                       </TText>
                     )}
-                    <PurchaseLinks />
-                  </YStack>
+                          </YStack>
                 </ScrollView>
               )}
             </YStack>
