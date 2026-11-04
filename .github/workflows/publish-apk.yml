@@ -1,0 +1,35 @@
+name: Publish custom APK (test)
+
+on:
+  push:
+    branches:
+      - fix/esim-loading-clean-ui
+    paths:
+      - .github/workflows/publish-apk.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download previously compiled APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh run download 41846062518 --repo "$GITHUB_REPOSITORY" --name NekokoLPA-custom-apk --dir dist
+          APK="$(find dist -type f -name '*.apk' -print -quit)"
+          test -n "$APK" || { echo 'APK missing from artifact'; exit 1; }
+          cp "$APK" dist/NekokoLPA-custom-arm64.apk
+          ls -lh dist/NekokoLPA-custom-arm64.apk
+
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.14.401-custom-test1             dist/NekokoLPA-custom-arm64.apk             --repo "$GITHUB_REPOSITORY"             --target fix/esim-loading-clean-ui             --title "NekokoLPA 1.14.401 · 定制测试版"             --notes "个人修改测试版：简化界面链接；优化 eSIM 切换时的加载状态清理。此 APK 尚未通过真机安装与 eSIM 切换验证；如安装失败请记录 Android 安装器错误。基于 iebb/NekokoLPA，保留原项目许可。"             --prerelease
