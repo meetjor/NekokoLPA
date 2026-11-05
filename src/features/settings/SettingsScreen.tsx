@@ -28,7 +28,7 @@ import {DEFAULT_THEME_COLOR} from '@/shared/theme/presetColors';
 import SectionLabel from '@/shared/ui/SectionLabel';
 import RowGroup, {Row} from '@/shared/ui/RowGroup';
 import {AppVersion} from '@/shared/config/app';
-import {fontFamily, fontSize} from '@/shared/theme/tokens';
+import {fontFamily, fontSize, radius} from '@/shared/theme/tokens';
 
 /** Which rows belong to which section, in display order. */
 const SECTIONS = [
@@ -62,13 +62,19 @@ const SettingsSection = ({
   // A mono micro-label over a hairline-separated group: the separators come
   // from RowGroup's 1px gaps, so there is no rule under the final row.
   return (
-    <YStack gap={8} marginBottom={18}>
-      <YStack paddingLeft={4}>
+    <YStack gap={10} marginBottom={24}>
+      <XStack paddingLeft={4} alignItems="center" gap={9}>
+        <YStack
+          width={3}
+          height={15}
+          backgroundColor="$primaryColor"
+          borderRadius={radius.pill}
+        />
         <SectionLabel>{title}</SectionLabel>
-      </YStack>
+      </XStack>
       <RowGroup>
         {items.map(item => (
-          <Row key={item.key} paddingVertical={14}>
+          <Row key={item.key} paddingVertical={16}>
             {renderItem({item})}
           </Row>
         ))}
@@ -187,10 +193,11 @@ export default function Settings(_props: RootScreenProps<'Settings'>) {
           />
         ))}
 
-        <YStack gap={8} marginBottom={18}>
-          <YStack paddingLeft={4}>
+        <YStack gap={10} marginBottom={24}>
+          <XStack paddingLeft={4} alignItems="center" gap={9}>
+            <YStack width={3} height={15} backgroundColor="$primaryColor" borderRadius={radius.pill} />
             <SectionLabel>{t('main:settings_group_about')}</SectionLabel>
-          </YStack>
+          </XStack>
           <RowGroup>
             <Row>
               <XStack alignItems="center" justifyContent="space-between" gap={12}>

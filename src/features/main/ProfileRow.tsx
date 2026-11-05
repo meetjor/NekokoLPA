@@ -4,7 +4,7 @@ import {preferences} from '@/shared/storage';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import {Text, useTheme, XStack, YStack} from 'tamagui';
 // useTheme covers dynamic color; no need for useColorScheme here
-import {Pencil, Trash2} from '@tamagui/lucide-icons';
+import {Pencil, Trash2, Smartphone} from '@tamagui/lucide-icons';
 import {Alert, Image, Pressable, ToastAndroid, TouchableOpacity} from 'react-native';
 import {makeLoading} from '@/shared/utils/loading';
 import {Flags} from '@/assets/flags';
@@ -240,33 +240,36 @@ const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId
       overshootFriction={8}
       friction={2}
       containerStyle={{backgroundColor: theme.surfaceRow?.val}}>
-      {/* One row of the profile group. The rounded card, drop shadow and
-          per-profile hue stripe are gone: rank now comes from the group's
-          hairlines and from the accent, which marks the active profile only. */}
-      <YStack backgroundColor="$surfaceRow" paddingHorizontal={14} paddingVertical={9}>
+      <YStack backgroundColor="$surfaceRow" paddingHorizontal={14} paddingVertical={13}>
+        {profile.selected && (
+          <YStack
+            position="absolute"
+            left={0}
+            top={0}
+            bottom={0}
+            width={3}
+            backgroundColor="$primaryColor"
+          />
+        )}
         <XStack width="100%" alignItems="center" gap={10}>
-          {iconUri && (
-            <YStack
-              width={30}
-              height={30}
-              borderRadius={radius.sm}
-              backgroundColor="$surfaceSpecial"
-              alignItems="center"
-              justifyContent="center"
-              overflow="hidden">
-              <Image style={{width: 30, height: 30}} source={{uri: iconUri}} resizeMode="contain" />
-            </YStack>
-          )}
+          <YStack
+            width={40}
+            height={40}
+            borderRadius={radius.md}
+            backgroundColor="$surfaceSpecial"
+            alignItems="center"
+            justifyContent="center"
+            overflow="hidden">
+            {iconUri ? (
+              <Image style={{width: 36, height: 36}} source={{uri: iconUri}} resizeMode="contain" />
+            ) : (
+              <Smartphone size={22} color={theme.primaryColor?.val as string} />
+            )}
+          </YStack>
 
           <Pressable style={{flex: 1}} onPress={handleProfilePress}>
             <YStack gap={1}>
-              {/* Nothing marks the active profile here. It was a badge, then
-                  a dot, and the switch on the right has said it the whole
-                  time — a second marker for the same state only competes with
-                  the name it sits in front of. */}
               <XStack alignItems="center" gap={8}>
-                {/* The flag belongs beside the name it qualifies; the tile is
-                    for the operator's mark. */}
                 <Image
                   style={{width: 22, height: 15, borderRadius: 2}}
                   source={Flags[country] || Flags.UN}
@@ -286,6 +289,20 @@ const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId
                 displaySubtitle={displaySubtitle}
                 stealthMode={stealthMode}
               />
+              <XStack alignItems="center" gap={6} paddingTop={3}>
+                <YStack
+                  width={7}
+                  height={7}
+                  borderRadius={radius.pill}
+                  backgroundColor={profile.selected ? '$primaryColor' : '$color9'}
+                />
+                <Text
+                  fontSize={fontSize.xs}
+                  fontWeight={'600' as any}
+                  color={profile.selected ? '$primaryColor' : '$color9'}>
+                  {t(profile.selected ? 'main:profile_state_enabled' : 'main:profile_state_disabled')}
+                </Text>
+              </XStack>
               <ProfileTags tags={tags} stealthMode={stealthMode} />
             </YStack>
           </Pressable>

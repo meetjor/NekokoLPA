@@ -4,7 +4,7 @@ import {useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {Text as TText, useTheme, XStack, YStack} from 'tamagui';
-import {Bell, ChevronRight, Copy, Info, Menu, Settings} from '@tamagui/lucide-icons';
+import {Bell, ChevronRight, Copy, Cpu, Info, Menu, Settings} from '@tamagui/lucide-icons';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import AppSheet from '@/shared/ui/AppSheet';
@@ -224,12 +224,32 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
         borderColor="$borderColor"
         borderRadius={radius.lg}
         overflow="hidden">
-        <YStack padding={13} gap={7}>
-          <XStack alignItems="baseline" justifyContent="space-between" gap={10}>
-            <SectionLabel color="$primaryColor">{supplementText || 'eUICC'}</SectionLabel>
-            <TText color="$color9" fontSize={fontSize.sm}>
-              {profileCountLabel}
-            </TText>
+        <YStack padding={16} gap={12}>
+          <XStack alignItems="center" gap={11}>
+            <YStack
+              width={42}
+              height={42}
+              borderRadius={radius.md}
+              backgroundColor="$surfaceSpecial"
+              alignItems="center"
+              justifyContent="center">
+              <Cpu size={22} color={theme.primaryColor?.val as string} />
+            </YStack>
+            <YStack flex={1} minWidth={0} gap={4}>
+              <SectionLabel color="$primaryColor">{supplementText || 'eUICC'}</SectionLabel>
+              <TText color="$color9" fontSize={fontSize.xs} fontFamily={fontFamily.mono as any}>
+                eUICC · EID
+              </TText>
+            </YStack>
+            <XStack
+              backgroundColor="$surfaceSpecial"
+              paddingHorizontal={10}
+              paddingVertical={6}
+              borderRadius={radius.pill}>
+              <TText color="$textDefault" fontSize={fontSize.xs} fontWeight={'600' as any}>
+                {profileCountLabel}
+              </TText>
+            </XStack>
           </XStack>
 
           {/* EID and free space share a row. The EID yields first — it is the

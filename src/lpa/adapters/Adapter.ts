@@ -219,24 +219,85 @@ export class Adapter {
     return this.execute('process_notification_single', [seqNumber]);
   }
 
-  /** Re-reads eUICC info and profiles after a state-changing operation. */
-  private async reloadAfterChange(kind: 'disable' | 'standard'): Promise<void> {
+  /**
+   * eUICC profile state may lag behind the completed APDU while the modem
+   * re-attaches. A single immediate read can therefore cache the OLD state
+   * until the user manually pulls to refresh.
+   *
+   * Read the actual card state until it matches the requested transition.
+   * The foreground wait is bounded; a later reconciliation handles slower
+   * modems without leaving the blocking loader on screen indefinitely.
+   */
+  private async reloadAfterChange(
+    kind: 'disable' | 'standard',
+    expected?: {iccid: string; enabled: boolean},
+  ): Promise<void> {
     await this.settle(kind);
-    await this.getEuiccInfo();
-    await this.getProfiles();
+
+    const matches = (profiles: ProfileMetadataMap[]) =>
+      !expected ||
+      profiles.some(
+        p => p.iccid === expected.iccid && (p.profileState === 1) === expected.enabled,
+      );
+
+    const maxAttempts = expected ? (this.device.type === 'omapi' ? 5 : 3) : 1;
+    let confirmed = false;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        // Prioritise profile state over general eUICC info: a transient info
+        // failure must not prevent the switch status from being updated.
+        const profiles = await this.getProfiles();
+        if (matches(profiles)) {
+          confirmed = true;
+          break;
+        }
+      } catch (error) {
+        console.warn('[LPA] Profile read during switch recovery failed', error);
+      }
+      if (attempt < maxAttempts - 1) {
+        await delay(500 + attempt * 250);
+      }
+    }
+
+    try {
+      await this.getEuiccInfo();
+    } catch (error) {
+      console.warn('[LPA] eUICC info refresh after switch failed', error);
+    }
+
+    if (!confirmed && expected) {
+      console.warn('[LPA] Profile state is still settling; scheduling a background refresh');
+      // Some modems take several seconds longer. Do not keep the UI blocked
+      // just to wait for a final radio re-attach.
+      const retryLater = async (remaining: number): Promise<void> => {
+        await delay(3000);
+        if (this.obsolete) return;
+        try {
+          const profiles = await this.getProfiles();
+          if (matches(profiles)) return;
+        } catch (error) {
+          console.warn('[LPA] Delayed profile refresh failed', error);
+        }
+        if (remaining > 1) {
+          await retryLater(remaining - 1);
+        }
+      };
+      void retryLater(3);
+    }
   }
 
   async disableProfileByIccId(iccid: string): Promise<any> {
     const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
     const result = await this.execute('disable_profile', [iccid, refreshFlag]);
-    await this.reloadAfterChange('disable');
+    await this.reloadAfterChange('disable', {iccid, enabled: false});
     return result;
   }
 
   async enableProfileByIccId(iccid: string): Promise<any> {
     const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
     const result = await this.execute('enable_profile', [iccid, refreshFlag]);
-    await this.reloadAfterChange('standard');
+    await this.reloadAfterChange('standard', {iccid, enabled: true});
     return result;
   }
 

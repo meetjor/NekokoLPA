@@ -41,8 +41,8 @@ function Main({navigation}: RootScreenProps<'Main'>) {
           flexWrap="wrap"
           gap={12}
           paddingHorizontal={14}
-          paddingTop={12}
-          paddingBottom={12}
+          paddingTop={16}
+          paddingBottom={16}
           backgroundColor="$surfaceRow"
           borderBottomWidth={1}
           borderBottomColor="$borderColor">

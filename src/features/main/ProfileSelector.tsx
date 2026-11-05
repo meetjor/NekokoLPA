@@ -62,38 +62,34 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
     }
   }, [adapter]);
 
-  // No well around the list: profiles are the screen's subject, and boxing
-  // them made them read as one inset panel competing with the chip card above.
-  // Rows sit on the page with a hairline between them and nothing after the
-  // last one.
+  // Separate profile cards make the currently selected line easier to
+  // recognise at a glance, without needing to inspect the switch position.
   const renderItem = useCallback(
-    ({item, index}: {item: Profile & {selected: boolean}; index: number}) => (
+    ({item}: {item: Profile & {selected: boolean}}) => (
       <TView
         style={{
-          borderBottomWidth: index === profiles.length - 1 ? 0 : 1,
-          borderBottomColor: theme.borderColor?.val,
+          marginBottom: 10,
+          borderRadius: radius.lg,
+          borderWidth: item.selected ? 1.5 : 1,
+          borderColor: item.selected ? theme.primaryColor?.val : theme.borderColor?.val,
+          backgroundColor: theme.surfaceRow?.val,
+          overflow: 'hidden',
+          elevation: item.selected ? 2 : 0,
         }}>
         <ProfileRow deviceId={deviceId} profile={item} />
       </TView>
     ),
-    [deviceId, profiles.length, theme.borderColor?.val],
+    [deviceId, theme.primaryColor?.val, theme.borderColor?.val, theme.surfaceRow?.val],
   );
 
   return (
     <FlatList
       style={{
-        backgroundColor: theme.surfaceRow?.val,
-        borderRadius: radius.lg,
-        overflow: 'hidden',
-        // Sized to its content up to the space available, then scrolled.
-        // Growing would leave an empty panel below a couple of profiles, but
-        // without the shrink a long list lays itself out past the bottom of
-        // the window and is simply cut off there — no scrolling, and the rows
-        // underneath unreachable. That is most visible on a desktop window
-        // short enough to matter and a card with two dozen profiles on it.
+        // Individual cards sit on the page instead of one solid list panel.
         flexGrow: 0,
         flexShrink: 1,
       }}
+      contentContainerStyle={{paddingBottom: 18}}
       data={profiles}
       keyExtractor={item => item.iccid || String(item)}
       renderItem={renderItem}
