@@ -2,7 +2,7 @@
 
 本文件是本仓库的开发入口，适用于 Work、Codex 及后续开发者。以实际源码、Git 历史、Actions、Release 和用户最新反馈恢复状态，不依赖聊天记忆，也不要从零重建项目。
 
-最后更新：2026-11-05。当前维护分支：`feature/qianlesim-v1`。
+最后更新：2026-11-06。当前维护分支：`feature/qianlesim-v1`。
 
 ## 1. 每次接管先做什么
 
@@ -17,15 +17,15 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.0 / versionCode 405，UI 已实现并通过本地校验；CI / 发布状态需实时查询。上一真机验证基线为 1.0.1 / 404 |
-| 已发布 APK 的源码基线 | `9e6fcb2df377f1e0d4848581635526ccd73f4167`；后续文档提交不等于新 APK |
-| 构建 | [Actions 42004322468](https://github.com/meetjor/NekokoLPA/actions/runs/42004322468) 成功，含 TypeScript、ARM64 编译、签名校验和发布 |
-| 签名验证 | 既有 CI 日志确认 APK v2 有效，签名者数量为 3；不是本次本地重新验签 |
-| 发布 | [v1.0.1-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.0.1-qianlesim-3sign)，仍标记预发布 |
+| 当前源码版本 | QianLesim 1.1.0 / versionCode 405，已完成 CI 并发布预发布 APK；上一真机验证基线为 1.0.1 / 404 |
+| 已发布 APK 的源码基线 | `c7d7f5989b06578711380bdd75134169282db81b`；后续文档提交不等于新 APK |
+| 构建 | [Actions 42056466890](https://github.com/meetjor/NekokoLPA/actions/runs/42056466890) 成功，含 TypeScript、111 项测试、ARM64 编译、三签指纹校验、Android 模拟器页面检查和发布 |
+| 签名验证 | 1.1.0 CI 日志确认 APK v2 有效，签名者数量为 3，且全部指纹匹配既有集合 |
+| 发布 | [v1.1.0-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)，标记预发布，待新 UI 真机回归 |
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
 | 已知未解决 Bug | 当前没有用户新报告的未解决故障；这不表示已经完成所有场景测试 |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | **1.1.0 极简 UI 已实现，本地 TypeScript、111 项测试和改动文件 ESLint 通过，待核实新 CI、签名与发布。** 模拟器不含真实 eUICC，新 UI 真机回归仍待用户确认 |
+| 当前下一步 | **1.1.0 极简 UI 已发布，自动化校验完成；等待用户覆盖安装后的真机反馈。** 模拟器不含真实 eUICC，新 UI 真机回归仍待用户确认 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -86,7 +86,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 构建后核实实际 SHA、Actions 结论、最终签名、Release 资产及浏览器直达下载链接；在最终回复中分别报告源码检查、构建、签名、真机测试状态。
 - 真机回归应覆盖安装、读卡、双向切换、无需下拉刷新显示正确状态、Loading 结束；未执行的项目明确列出，不自行填写通过。
 
-当前已发布 APK：[QianLesim-v1.0.1-arm64.apk](https://github.com/meetjor/NekokoLPA/releases/download/v1.0.1-qianlesim-3sign/QianLesim-v1.0.1-arm64.apk)。
+当前已发布 APK：[QianLesim-v1.1.0-arm64.apk](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.0-qianlesim-3sign/QianLesim-v1.1.0-arm64.apk)。
 
 ## 6. 如何持续维护交接
 
@@ -99,7 +99,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 ## 7. 当前获批的 UI 重构任务（2026-11-05）
 
 - **设计规范的唯一文字入口：** [`docs/QianLesim-UI-redesign.md`](docs/QianLesim-UI-redesign.md)。用户已对“深色、克制、平面几何、简洁科技感”的最新效果图表示认可，明确拒绝此前类似 AI 宣传海报的多层霓虹、玻璃反射、星空和装饰性山脉设计。
-- **1.1.0 已实现极简 UI；1.0.1 是旧视觉和已验证切换基线。** 需继续核实 CI 与实际 APK，不将实现完成当作发布/真机验证完成。
+- **1.1.0 已实现极简 UI；1.0.1 是旧视觉和已验证切换基线。** CI 和发布已核实，仍不得将其当作真机验证完成。
 - **行为必须保留：** 每张 eSIM 配置独立启用开关；点击目标配置直接发起原有启用流程，不添加“切换”总按钮或选卡弹窗。保留真实 SIM1/SIM2/eUICC 设备选择、可读卡、自动状态确认、Loading 清理和原版已有的安全保护逻辑。
 - **图标要重新设计：** 简洁可辨的几何 eSIM 芯片轮廓、少色、无轨道光环。1.1.0 已更新几何图标源文件 `assets/branding/qianlesim.svg`、React SVG 组件和 store 各密度图标；Gradle 使用自适应 `@mipmap/ic_launcher`。保留 QianLesim 名称、包名和三证书签名。
 - **不要编造功能和数据：** 用户批准的是视觉设计方向，效果图中的统计、切换历史、流量等可能只是示意。无可靠数据源时不得呈现虚假指标或新建无意义页面；现有界面功能应做真实可用的迁移。
@@ -113,4 +113,4 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 本次没有修改 `src/lpa/`、`src/store/`、Android 原生 OMAPI 或三签脚本。
 - 工作流增加 Jest、三枚证书指纹比对、发布 SHA 固定以及 Android 模拟器截图检查。对外仅发布三签 ARM64；额外 x86_64 Release 只用于无 eUICC 的模拟器页面检查，不对外发布。
 - 页面截图由 `scripts/capture-android-ui.py` 获取，覆盖深浅色首页/设置和放大字体，作为 `QianLesim-Android-UI` Actions artifact 保存。不得称这些截图证明真实读卡/切换已通过。
-- CI 结果、发布链接、用户真机反馈在获得后继续更新本文件与维护记录。
+- 1.1.0 构建/发布已确认；截图见 [UI 验证记录](docs/releases/1.1.0-ui-checks.md)。真实配置列表、中文真机布局、覆盖安装、读卡与双向切换待用户验证。后续按反馈更新本文件与维护记录。

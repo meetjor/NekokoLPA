@@ -4,19 +4,23 @@
 
 ## 1.1.0 极简 UI
 
-已完成石墨黑 / 科技蓝主题、新几何图标、精简首页与设置，保留每卡独立开关及原有基础功能，移除统计模块。源码版本为 1.1.0 / 405，构建与发布状态以 Actions 和 Releases 为准。
+已完成石墨黑 / 科技蓝主题、新几何图标、精简首页与设置，保留每卡独立开关及原有基础功能，移除统计模块。版本为 **1.1.0 / 405**，已完成构建、三证书校验和发布，当前为预发布测试版。
 
-- [1.1.0 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)（成功发布后可用）
+- [1.1.0 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)
 - [1.1.0 变更说明](docs/releases/1.1.0.md)
 
 ## 下载
 
+- [QianLesim 1.1.0 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.0-qianlesim-3sign/QianLesim-v1.1.0-arm64.apk)
+- [1.1.0 构建与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42056466890) · [实际 Android 截图与验证范围](docs/releases/1.1.0-ui-checks.md)
 - [全部 Releases（包括测试版）](https://github.com/meetjor/NekokoLPA/releases)
 - [QianLesim 1.0.1 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.0.1-qianlesim-3sign/QianLesim-v1.0.1-arm64.apk)
 - [1.0.1 发布说明](https://github.com/meetjor/NekokoLPA/releases/tag/v1.0.1-qianlesim-3sign) · [构建与签名校验](https://github.com/meetjor/NekokoLPA/actions/runs/42004322468)
 - [上一版三证书可用测试版](https://github.com/meetjor/NekokoLPA/releases/tag/v1.14.401-custom-3sign-test2)
 
 此前已验证切换的版本为 **1.0.1（versionCode 404）**，GitHub 上仍标记为预发布版本。包名为 `ee.nekoko.nlpa1`，沿用 Sakura、Community、9eSIM 三证书签名。
+
+1.1.0 已通过 TypeScript、11 个套件共 111 项测试、ARM64 编译、三枚证书指纹比对，以及无 eUICC Android 模拟器的深浅色首页/设置与放大字体页面检查。**真实读卡、切换和新 UI 真机体验仍待验证。** 请直接覆盖安装，无须卸载或删除 eSIM。
 
 ## 1.0.1 更新与验证
 
