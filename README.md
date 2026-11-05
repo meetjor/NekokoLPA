@@ -18,6 +18,7 @@
 - 对应源码提交：[`9e6fcb2`](https://github.com/meetjor/NekokoLPA/commit/9e6fcb2df377f1e0d4848581635526ccd73f4167)。Actions 已完成 TypeScript 校验、ARM64 编译、APK 签名验证与发布；日志确认 APK v2 签名有效、签名者数量为 3。
 - **2026-11-05 用户真机反馈：最新版已修复切换 Bug。** 此反馈确认原先切换后界面状态不更新的问题已解决；不代表所有设备或异常场景均已测试。
 - [开发接管与后续维护记录](docs/QianLesim-maintenance.md)
+- [开发者接管入口与项目约束（AGENTS.md）](AGENTS.md)
 
 ## 特色
 
