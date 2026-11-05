@@ -194,8 +194,7 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
   );
 
   const profileCount = DeviceState.profiles?.length ?? 0;
-  const profileCountLabel =
-    profileCount === 1 ? t('main:one_profile') : t('main:n_profiles', {count: profileCount});
+  const profileCountLabel = `${profileCount} 个配置`;
 
   const exactFreeBytes = DeviceState.bytesFree ?? 0;
 
@@ -277,7 +276,7 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
                 {formatSize(exactFreeBytes)}
               </TText>
               <TText color="$color9" fontSize={fontSize.sm}>
-                {t('main:euicc_available')}
+                可用
               </TText>
             </XStack>
           </XStack>
@@ -297,7 +296,7 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
               color="#E9EFFF"
               fontSize={fontSize.md}
               fontWeight={'600' as any}>
-              {t('main:add_profile')}
+              添加配置
             </TText>
           </TouchableOpacity>
           <TouchableOpacity
@@ -313,7 +312,7 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
               color="#C8D3FA"
               fontSize={fontSize.md}
               fontWeight={'500' as any}>
-              {t('main:manage')}
+              管理配置
             </TText>
           </TouchableOpacity>
         </XStack>

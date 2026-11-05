@@ -1,0 +1,85 @@
+name: QianLesim ARM64 Release (cached)
+
+on:
+  push:
+    branches: [feature/qianlesim-v1]
+    paths: [src/**, .github/workflows/qianlesim-release.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+            node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc.yml', 'patches/**') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - uses: actions/cache@v4
+        with:
+          path: |
+            android/app/.cxx
+            android/app/build/intermediates/cxx
+          key: ${{ runner.os }}-native-arm64-v1-${{ hashFiles('yarn.lock', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Configure Android SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses < /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
+          sed -i 's/compileSdkVersion = 37/compileSdkVersion = 36/g; s/buildToolsVersion = "37.0.0"/buildToolsVersion = "36.0.0"/g' android/build.gradle
+      - name: Dependencies and TypeScript
+        run: |
+          corepack enable
+          yarn install --immutable
+          yarn type-check
+      - name: Prepare build
+        run: bash apply_variant.sh store
+      - name: Assemble arm64 APK
+        working-directory: android
+        run: bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
+      - name: Apply public three-signer signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          APK="$(find android/app/build/outputs/apk/release -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          OUTPUT="$PWD/dist/QianLesim-v1.0.0-arm64.apk"
+          sed -n '/^java -jar apksigner.jar sign/,/--next-signer --ks signer\/keys\/9esim.jks/p' variants/multisign/signing.sh > dist/sign-three.sh
+          printf '  --out "%s" "%s"\n' "$OUTPUT" "$APK" >> dist/sign-three.sh
+          bash dist/sign-three.sh
+          java -jar apksigner.jar verify --verbose --print-certs "$OUTPUT" | tee dist/signing.txt
+          grep -q 'Number of signers: 3' dist/signing.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QianLesim-3sign
+          path: dist/QianLesim-v1.0.0-arm64.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.0.0-qianlesim-3sign \
+            dist/QianLesim-v1.0.0-arm64.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target feature/qianlesim-v1 \
+            --title 'QianLesim v1.0.0 - eSIM manager (three-signer)' \
+            --notes 'QianLesim v1.0.0. New orbit eSIM identity and blue-violet nightscape interface. After a successful switch, the UI immediately shows the requested eSIM and marks the status as syncing until the eUICC confirms it. Three public signers: Sakura, Community, 9eSIM. Keeps the ee.nekoko.nlpa1 package for in-place update from the prior three-signature test version. Real-device verification is still needed; do not remove eSIM profiles.' \
+            --prerelease
