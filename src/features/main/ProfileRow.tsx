@@ -313,7 +313,7 @@ const ProfileRowComponent = ({
                   color={syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#9AA6CE'}>
                   {syncing
                     ? '已切换 · 正在确认状态'
-                    : t(profile.selected ? 'main:profile_state_enabled' : 'main:profile_state_disabled')}
+                    : (profile.selected ? '已启用 · 当前使用' : '未启用')}
                 </Text>
               </XStack>
               <ProfileTags tags={tags} stealthMode={stealthMode} />
