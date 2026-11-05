@@ -1,7 +1,7 @@
 {
-    "appTitle": "NekokoLPA",
+    "appTitle": "QianLesim",
     "buyLink": "https://lpa.nekoko.ee/products",
-    "checkForUpdates": true,
+    "checkForUpdates": false,
     "githubLink": "https://github.com/iebb/NekokoLPA/",
     "displayGithubLink": true,
     "appId": "ee.nekoko.nlpa1",

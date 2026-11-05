@@ -102,7 +102,7 @@ android {
         resValue "string", "build_config_package", "ee.nekoko.nlpa"
         manifestPlaceholders = [
                 appLabel: 'NekokoLPA',
-                appIcon: "@mipmap/ic_launcher"
+                appIcon: "@drawable/qianlesim_launcher"
         ]
     }
     signingConfigs {

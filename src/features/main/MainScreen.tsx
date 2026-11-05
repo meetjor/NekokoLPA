@@ -1,6 +1,6 @@
 import React, {useCallback} from 'react';
 import {useDispatch} from 'react-redux';
-import {XStack, YStack} from 'tamagui';
+import {YStack} from 'tamagui';
 
 import SafeScreen from '@/shared/ui/SafeScreen';
 import SIMSelector from '@/features/main/SIMSelector';
@@ -8,49 +8,35 @@ import type {RootScreenProps} from '@/app/navigation/types';
 import {setupDevices} from '@/lpa/deviceManager';
 import AppHeader from '@/features/main/components/AppHeader';
 import ActionButtons from '@/features/main/components/ActionButtons';
+import Nightscape from '@/shared/ui/Nightscape';
 
-/**
- * The home screen shell.
- *
- * Deliberately not built on `Screen`: that composes SafeScreen + Title +
- * PageContainer, which gives every screen a large display-size heading and
- * 20px+ gutters. Home has no heading in this design — the identity lives in a
- * compact header strip, and the tab bar has to sit flush against it with no
- * page padding between them, so the two rules read as one edge.
- *
- * The strip is painted `$surfaceRow` rather than the page background, which is
- * what separates it from the content beneath without a drop shadow.
- */
 function Main({navigation}: RootScreenProps<'Main'>) {
   const dispatch = useDispatch();
 
   const handleRefresh = useCallback(async () => {
     try {
       await setupDevices(dispatch);
-    } catch (e) {
-      // Handle error silently
+    } catch (error) {
+      console.warn('[QianLesim] Manual refresh failed', error);
     }
   }, [dispatch]);
 
   return (
     <SafeScreen>
-      <YStack flex={1} minHeight={0}>
-        <XStack
-          alignItems="center"
-          justifyContent="space-between"
-          flexWrap="wrap"
-          gap={12}
-          paddingHorizontal={14}
-          paddingTop={16}
-          paddingBottom={16}
-          backgroundColor="$surfaceRow"
-          borderBottomWidth={1}
-          borderBottomColor="$borderColor">
-          <AppHeader navigation={navigation} />
-          <ActionButtons navigation={navigation} onRefresh={handleRefresh} />
-        </XStack>
-
+      <YStack flex={1} minHeight={0} backgroundColor="#0B1227">
+        <YStack position="relative" backgroundColor="#111936" overflow="hidden">
+          <YStack position="absolute" left={0} right={0} bottom={0} opacity={0.9}>
+            <Nightscape height={134} />
+          </YStack>
+          <YStack paddingHorizontal={20} paddingTop={16} paddingBottom={15}>
+            <AppHeader navigation={navigation} />
+            <ActionButtons navigation={navigation} onRefresh={handleRefresh} />
+          </YStack>
+        </YStack>
         <SIMSelector />
+        <YStack position="absolute" bottom={0} left={0} right={0} pointerEvents="none" opacity={0.36}>
+          <Nightscape height={64} footer />
+        </YStack>
       </YStack>
     </SafeScreen>
   );

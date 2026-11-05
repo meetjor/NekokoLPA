@@ -50,15 +50,15 @@ export const lightRamp: Ramp = {
 };
 
 export const darkRamp: Ramp = {
-  bg: '#0b0b0e',
-  surface: '#151519',
-  surface2: '#1e1e24',
-  line: '#26262d',
-  stripe: '#2b2b33',
-  fg: '#eceef2',
-  fg2: '#9aa0aa',
-  fg3: '#6b7078',
-  ok: '#31c07a',
+  bg: '#0A1126',
+  surface: '#1B2648',
+  surface2: '#263158',
+  line: '#35436E',
+  stripe: '#303B63',
+  fg: '#F4F6FF',
+  fg2: '#B5BFDE',
+  fg3: '#8290B7',
+  ok: '#39DE9A',
   danger: '#ff6369',
 };
 

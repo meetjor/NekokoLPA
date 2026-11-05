@@ -59,7 +59,7 @@ export default function SIMSelector() {
   }, [targetDevice, deviceList, dispatch]);
 
   return (
-    <TView flex={1} minHeight={0}>
+    <TView flex={1} minHeight={0} backgroundColor="#0B1227">
       {/* Mounted once for the whole screen, outside the branch below.
           Rendering a sheet inside each branch means the Modal is unmounted and
           a different one mounted the instant the first reader connects — and
@@ -97,7 +97,7 @@ export default function SIMSelector() {
           </YStack>
         </ScrollView>
       ) : (
-        <TView flex={1} minHeight={0} key={deviceList.length}>
+        <TView flex={1} minHeight={0} key={deviceList.length} backgroundColor="#0B1227">
           <SlotTabs
             tabs={deviceList.map(name => ({
               key: name,
