@@ -87,10 +87,12 @@ const ProfileRowComponent = ({
   profile,
   deviceId,
   syncing = false,
+  syncError = false,
 }: {
   profile: ProfileExt;
   deviceId: string;
   syncing?: boolean;
+  syncError?: boolean;
 }) => {
   const {t} = useTranslation(['main']);
   const adapter = Adapters[deviceId];
@@ -305,15 +307,17 @@ const ProfileRowComponent = ({
                   width={8}
                   height={8}
                   borderRadius={radius.pill}
-                  backgroundColor={syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#8493BD'}
+                  backgroundColor={syncError || syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#8493BD'}
                 />
                 <Text
                   fontSize={fontSize.xs}
                   fontWeight={'600' as any}
-                  color={syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#9AA6CE'}>
-                  {syncing
-                    ? '已切换 · 正在确认状态'
-                    : (profile.selected ? '已启用 · 当前使用' : '未启用')}
+                  color={syncError || syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#9AA6CE'}>
+                  {syncError
+                    ? '状态未确认 · 请下拉刷新'
+                    : syncing
+                      ? '切换成功 · 正在同步'
+                      : (profile.selected ? '已启用 · 当前使用' : '未启用')}
                 </Text>
               </XStack>
               <ProfileTags tags={tags} stealthMode={stealthMode} />
@@ -331,6 +335,7 @@ export const ProfileRow = React.memo(
   ProfileRowComponent,
   (prevProps, nextProps) =>
     prevProps.syncing === nextProps.syncing &&
+    prevProps.syncError === nextProps.syncError &&
     prevProps.profile.iccid === nextProps.profile.iccid &&
     prevProps.profile.profileState === nextProps.profile.profileState &&
     prevProps.profile.profileNickname === nextProps.profile.profileNickname &&

@@ -1,4 +1,4 @@
-import {useTheme, View as TView} from 'tamagui';
+import {View as TView} from 'tamagui';
 import {radius} from '@/shared/theme/tokens';
 import {useSelector} from 'react-redux';
 import {Profile} from '@/lpa/types/profile';
@@ -14,7 +14,6 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
   const DeviceState = useSelector(selectDeviceState(deviceId));
   const [refreshing, setRefreshing] = useState(false);
   const {setLoading} = useLoading();
-  const theme = useTheme();
   const adapter = Adapters[deviceId];
 
   const profiles = useMemo(() => {
@@ -79,10 +78,10 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
           shadowRadius: item.selected ? 14 : 3,
           elevation: item.selected ? 7 : 1,
         }}>
-        <ProfileRow deviceId={deviceId} profile={item} syncing={DeviceState.switchSyncing === true} />
+        <ProfileRow deviceId={deviceId} profile={item} syncing={DeviceState.switchSyncing === true} syncError={DeviceState.switchSyncError === true} />
       </TView>
     ),
-    [deviceId, DeviceState.switchSyncing],
+    [deviceId, DeviceState.switchSyncing, DeviceState.switchSyncError],
   );
 
   return (

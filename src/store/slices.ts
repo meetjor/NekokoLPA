@@ -15,6 +15,8 @@ export interface DeviceState {
   profiles?: ProfileMetadataMap[];
   /** True while eUICC profile state is being confirmed after a successful switch. */
   switchSyncing?: boolean;
+  /** The automatic confirmation timed out; displayed state is unverified. */
+  switchSyncError?: boolean;
   message?: string;
   name?: string;
 }

@@ -160,7 +160,6 @@ const ActionSheetOptions = React.memo(
 );
 
 export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
-  const {t} = useTranslation(['main']);
   const theme = useTheme();
   const formatSize = useFormatSize();
   const navigation = useNavigation<any>();
