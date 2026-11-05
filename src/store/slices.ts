@@ -17,6 +17,7 @@ export interface DeviceState {
   switchSyncing?: boolean;
   /** The automatic confirmation timed out; displayed state is unverified. */
   switchSyncError?: boolean;
+  switchTargetIccid?: string;
   message?: string;
   name?: string;
 }

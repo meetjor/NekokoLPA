@@ -160,8 +160,12 @@ export class Adapter {
     try {
       try {
         return await this._execute(command, args);
-      } catch {
-        // Retry once against a freshly set up runtime.
+      } catch (error) {
+        if (command === 'enable_profile' || command === 'disable_profile') {
+          // SIM REFRESH can sever OMAPI after the eUICC accepted a switch.
+          // Replaying this command can fail even when the first one worked.
+          throw error;
+        }
         return await (
           await setupDevice(this)
         )(command, args);
@@ -201,7 +205,7 @@ export class Adapter {
       if (publish) {
         this.switchGeneration++;
         this.profiles = profiles;
-        this.setState({profiles, switchSyncing: false, switchSyncError: false});
+        this.setState({profiles, switchSyncing: false, switchSyncError: false, switchTargetIccid: undefined});
       }
       return profiles;
     }
@@ -239,7 +243,12 @@ export class Adapter {
         : profile.iccid === expected.iccid ? 0 : profile.profileState,
     }));
     this.profiles = profiles;
-    this.setState({profiles, switchSyncing: true, switchSyncError: false});
+    this.setState({
+      profiles,
+      switchSyncing: true,
+      switchSyncError: false,
+      switchTargetIccid: expected.iccid,
+    });
     return generation;
   }
 
@@ -277,7 +286,12 @@ export class Adapter {
         const fresh = await this.getProfiles(false);
         if (isCurrent() && matches(fresh)) {
           this.profiles = fresh;
-          this.setState({profiles: fresh, switchSyncing: false, switchSyncError: false});
+          this.setState({
+            profiles: fresh,
+            switchSyncing: false,
+            switchSyncError: false,
+            switchTargetIccid: undefined,
+          });
           return true;
         }
       } catch (error) {
@@ -304,27 +318,49 @@ export class Adapter {
       }
       if (!isCurrent()) return;
       console.warn('[QianLesim] Cannot confirm switched profile; pull to refresh.');
-      this.setState({switchSyncing: false, switchSyncError: true});
-      // Keep the requested switch visible, but clearly mark it unverified. Never
-      // silently revert to stale chip reads or assert it was confirmed.
+      // The switch was never verified. Read the actual card state once more
+      // and render it if available instead of claiming the optimistic state.
+      try {
+        const actual = await this.getProfiles(false);
+        if (isCurrent() && actual.length > 0) {
+          this.profiles = actual;
+          this.setState({profiles: actual});
+        }
+      } catch (error) {
+        console.warn('[QianLesim] Final switch reconciliation read failed', error);
+      }
+      if (isCurrent()) this.setState({switchSyncing: false, switchSyncError: true});
     };
     void reconcile();
   }
 
-  async disableProfileByIccId(iccid: string): Promise<any> {
+  /**
+   * OMAPI may lose the final APDU reply when a successful switch resets the
+   * modem. Treat the reply as uncertain, then verify the real card state.
+   * Do not blindly retry a possibly already accepted switch command.
+   */
+  private async changeProfileByIccId(iccid: string, enabled: boolean): Promise<void> {
+    const generation = this.showExpectedState({iccid, enabled});
     const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
-    const result = await this.execute('disable_profile', [iccid, refreshFlag]);
-    const generation = this.showExpectedState({iccid, enabled: false});
-    await this.reloadAfterChange('disable', {iccid, enabled: false}, generation);
-    return result;
+    const command = enabled ? 'enable_profile' : 'disable_profile';
+    try {
+      await this.execute(command, [iccid, refreshFlag]);
+    } catch (error) {
+      console.warn('[QianLesim] Switch outcome uncertain, verifying hardware state', error);
+    }
+    await this.reloadAfterChange(
+      enabled ? 'standard' : 'disable',
+      {iccid, enabled},
+      generation,
+    );
   }
 
-  async enableProfileByIccId(iccid: string): Promise<any> {
-    const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
-    const result = await this.execute('enable_profile', [iccid, refreshFlag]);
-    const generation = this.showExpectedState({iccid, enabled: true});
-    await this.reloadAfterChange('standard', {iccid, enabled: true}, generation);
-    return result;
+  async disableProfileByIccId(iccid: string): Promise<void> {
+    await this.changeProfileByIccId(iccid, false);
+  }
+
+  async enableProfileByIccId(iccid: string): Promise<void> {
+    await this.changeProfileByIccId(iccid, true);
   }
 
   async setNicknameByIccId(iccid: string, nickname: string): Promise<any> {

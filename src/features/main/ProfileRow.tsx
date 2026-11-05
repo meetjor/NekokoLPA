@@ -316,7 +316,7 @@ const ProfileRowComponent = ({
                   {syncError
                     ? '状态未确认 · 请下拉刷新'
                     : syncing
-                      ? '切换成功 · 正在同步'
+                      ? '切换中 · 正在核实状态'
                       : (profile.selected ? '已启用 · 当前使用' : '未启用')}
                 </Text>
               </XStack>

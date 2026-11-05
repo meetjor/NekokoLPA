@@ -78,10 +78,11 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
           shadowRadius: item.selected ? 14 : 3,
           elevation: item.selected ? 7 : 1,
         }}>
-        <ProfileRow deviceId={deviceId} profile={item} syncing={DeviceState.switchSyncing === true} syncError={DeviceState.switchSyncError === true} />
+        <ProfileRow deviceId={deviceId} profile={item} syncing={DeviceState.switchSyncing === true && DeviceState.switchTargetIccid === item.iccid}
+          syncError={DeviceState.switchSyncError === true && DeviceState.switchTargetIccid === item.iccid} />
       </TView>
     ),
-    [deviceId, DeviceState.switchSyncing, DeviceState.switchSyncError],
+    [deviceId, DeviceState.switchSyncing, DeviceState.switchSyncError, DeviceState.switchTargetIccid],
   );
 
   return (

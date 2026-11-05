@@ -60,7 +60,7 @@ jobs:
           mkdir -p dist
           APK="$(find android/app/build/outputs/apk/release -type f -name '*.apk' -print -quit)"
           test -n "$APK"
-          OUTPUT="$PWD/dist/QianLesim-v1.0.0-arm64.apk"
+          OUTPUT="$PWD/dist/QianLesim-v1.0.1-arm64.apk"
           sed -n '/^java -jar apksigner.jar sign/,/--next-signer --ks signer\/keys\/9esim.jks/p' variants/multisign/signing.sh > dist/sign-three.sh
           printf '  --out "%s" "%s"\n' "$OUTPUT" "$APK" >> dist/sign-three.sh
           bash dist/sign-three.sh
@@ -69,17 +69,17 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: QianLesim-3sign
-          path: dist/QianLesim-v1.0.0-arm64.apk
+          path: dist/QianLesim-v1.0.1-arm64.apk
           if-no-files-found: error
           retention-days: 14
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0.0-qianlesim-3sign \
-            dist/QianLesim-v1.0.0-arm64.apk \
+          gh release create v1.0.1-qianlesim-3sign \
+            dist/QianLesim-v1.0.1-arm64.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target feature/qianlesim-v1 \
-            --title 'QianLesim v1.0.0 - eSIM manager (three-signer)' \
-            --notes 'QianLesim v1.0.0. New orbit eSIM identity and blue-violet nightscape interface. After a successful switch, the UI immediately shows the requested eSIM and marks the status as syncing until the eUICC confirms it. Three public signers: Sakura, Community, 9eSIM. Keeps the ee.nekoko.nlpa1 package for in-place update from the prior three-signature test version. Real-device verification is still needed; do not remove eSIM profiles.' \
+            --title 'QianLesim v1.0.1 - eSIM status fix (three-signer)' \
+            --notes 'QianLesim v1.0.1. A SIM refresh may drop OMAPI before delivering the APDU response. Now the UI enters a pending state before the command; the result is checked by reading the eUICC even if the switch call rejects. Duplicate switch replays are avoided. Same QianLesim UI, package ID, and public Sakura, Community, 9eSIM signature set. Real device verification required.' \
             --prerelease
