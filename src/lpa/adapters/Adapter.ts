@@ -193,11 +193,13 @@ export class Adapter {
     return info;
   }
 
-  async getProfiles(): Promise<ProfileMetadataMap[]> {
+  async getProfiles(publish = true): Promise<ProfileMetadataMap[]> {
     const profiles = await this.execute('get_profiles', []);
     if (Array.isArray(profiles)) {
-      this.profiles = profiles;
-      this.setState({profiles});
+      if (publish) {
+        this.profiles = profiles;
+        this.setState({profiles, switchSyncing: false});
+      }
       return profiles;
     }
     return [];
@@ -220,76 +222,90 @@ export class Adapter {
   }
 
   /**
-   * eUICC profile state may lag behind the completed APDU while the modem
-   * re-attaches. A single immediate read can therefore cache the OLD state
-   * until the user manually pulls to refresh.
-   *
-   * Read the actual card state until it matches the requested transition.
-   * The foreground wait is bounded; a later reconciliation handles slower
-   * modems without leaving the blocking loader on screen indefinitely.
+   * A successful ES10c response is authoritative for the operation itself.
+   * Modems may then need a refresh/re-attach before GetProfiles reflects it.
+   * Publish the requested state immediately AFTER command success, and label
+   * it as syncing until a fresh eUICC read verifies the real state.
    */
+  private showExpectedState(expected: {iccid: string; enabled: boolean}): void {
+    const profiles = this.profiles.map(profile => ({
+      ...profile,
+      profileState: expected.enabled
+        ? profile.iccid === expected.iccid ? 1 : 0
+        : profile.iccid === expected.iccid ? 0 : profile.profileState,
+    }));
+    this.profiles = profiles;
+    this.setState({profiles, switchSyncing: true});
+  }
+
+  /** Re-read the real card to confirm the optimistic UI after a switch. */
   private async reloadAfterChange(
     kind: 'disable' | 'standard',
     expected?: {iccid: string; enabled: boolean},
   ): Promise<void> {
     await this.settle(kind);
+    if (!expected) {
+      await this.getEuiccInfo();
+      await this.getProfiles();
+      return;
+    }
 
     const matches = (profiles: ProfileMetadataMap[]) =>
-      !expected ||
       profiles.some(
-        p => p.iccid === expected.iccid && (p.profileState === 1) === expected.enabled,
+        profile =>
+          profile.iccid === expected.iccid &&
+          (profile.profileState === 1) === expected.enabled,
       );
 
-    const maxAttempts = expected ? (this.device.type === 'omapi' ? 5 : 3) : 1;
-    let confirmed = false;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const verify = async (): Promise<boolean> => {
+      // A manual pull-to-refresh first reads eUICC info and then profiles.
+      // Follow that SAME sequence: direct GetProfiles polling alone left some
+      // Android modems reporting the pre-switch state indefinitely.
       try {
-        // Prioritise profile state over general eUICC info: a transient info
-        // failure must not prevent the switch status from being updated.
-        const profiles = await this.getProfiles();
-        if (matches(profiles)) {
-          confirmed = true;
-          break;
+        await this.getEuiccInfo();
+      } catch (error) {
+        console.warn('[QianLesim] eUICC info re-read failed', error);
+      }
+      try {
+        const fresh = await this.getProfiles(false);
+        if (matches(fresh)) {
+          this.profiles = fresh;
+          this.setState({profiles: fresh, switchSyncing: false});
+          return true;
         }
       } catch (error) {
-        console.warn('[LPA] Profile read during switch recovery failed', error);
+        console.warn('[QianLesim] Profile status verification failed', error);
       }
-      if (attempt < maxAttempts - 1) {
-        await delay(500 + attempt * 250);
-      }
+      return false;
+    };
+
+    // Keep the blocking loader bounded; do not display the old status again
+    // just because the modem has not yet finished re-attaching.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (await verify()) return;
+      if (attempt < 2) await delay(700);
     }
 
-    try {
-      await this.getEuiccInfo();
-    } catch (error) {
-      console.warn('[LPA] eUICC info refresh after switch failed', error);
-    }
-
-    if (!confirmed && expected) {
-      console.warn('[LPA] Profile state is still settling; scheduling a background refresh');
-      // Some modems take several seconds longer. Do not keep the UI blocked
-      // just to wait for a final radio re-attach.
-      const retryLater = async (remaining: number): Promise<void> => {
-        await delay(3000);
+    // Continue reconciling in the background. This reads genuine card state,
+    // it does not forge a successful hardware result.
+    const reconcile = async (): Promise<void> => {
+      for (let attempt = 0; attempt < 6; attempt++) {
+        await delay(attempt === 0 ? 2000 : 3000);
         if (this.obsolete) return;
-        try {
-          const profiles = await this.getProfiles();
-          if (matches(profiles)) return;
-        } catch (error) {
-          console.warn('[LPA] Delayed profile refresh failed', error);
-        }
-        if (remaining > 1) {
-          await retryLater(remaining - 1);
-        }
-      };
-      void retryLater(3);
-    }
+        if (await verify()) return;
+      }
+      console.warn(
+        '[QianLesim] Card has not confirmed the switched profile. Manual refresh recommended.',
+      );
+      // Leave switchSyncing=true rather than falsely claiming confirmation.
+    };
+    void reconcile();
   }
 
   async disableProfileByIccId(iccid: string): Promise<any> {
     const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
     const result = await this.execute('disable_profile', [iccid, refreshFlag]);
+    this.showExpectedState({iccid, enabled: false});
     await this.reloadAfterChange('disable', {iccid, enabled: false});
     return result;
   }
@@ -297,6 +313,7 @@ export class Adapter {
   async enableProfileByIccId(iccid: string): Promise<any> {
     const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
     const result = await this.execute('enable_profile', [iccid, refreshFlag]);
+    this.showExpectedState({iccid, enabled: true});
     await this.reloadAfterChange('standard', {iccid, enabled: true});
     return result;
   }

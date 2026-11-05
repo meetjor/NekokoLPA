@@ -13,6 +13,8 @@ export interface DeviceState {
   notifications?: Notification[];
   euiccAddress?: EuiccConfiguredAddresses;
   profiles?: ProfileMetadataMap[];
+  /** True while eUICC profile state is being confirmed after a successful switch. */
+  switchSyncing?: boolean;
   message?: string;
   name?: string;
 }
