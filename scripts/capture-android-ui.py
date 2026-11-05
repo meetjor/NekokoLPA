@@ -20,7 +20,8 @@ def hierarchy():
 def await_text(text):
     for _ in range(20):
         xml = hierarchy()
-        if text in xml:
+        # Android may expose textTransform labels in uppercase.
+        if text.casefold() in xml.casefold():
             return xml
         time.sleep(1)
     raise RuntimeError(f'UI did not display {text!r}')
@@ -63,4 +64,5 @@ try:
     await_text('General')
     screenshot('dark-settings-large-text')
 finally:
+    (OUT / 'last-screen.png').write_bytes(adb('exec-out', 'screencap', '-p'))
     (OUT / 'logcat.txt').write_bytes(adb('logcat', '-d', '-t', '2000'))
