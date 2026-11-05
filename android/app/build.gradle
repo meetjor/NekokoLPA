@@ -101,8 +101,8 @@ android {
         versionName packageJson["version"]
         resValue "string", "build_config_package", "ee.nekoko.nlpa"
         manifestPlaceholders = [
-                appLabel: 'NekokoLPA',
-                appIcon: "@drawable/qianlesim_launcher"
+                appLabel: 'QianLesim',
+                appIcon: "@mipmap/ic_launcher"
         ]
     }
     signingConfigs {
@@ -117,7 +117,7 @@ android {
         abi {
             enable true
             reset()
-            include 'arm64-v8a' // , 'x86_64' , 'armeabi-v7a',  'x86'
+            include(*((findProperty('reactNativeArchitectures') ?: 'arm64-v8a').split(',')))
             // universalApk true
         }
     }

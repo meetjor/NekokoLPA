@@ -11,7 +11,6 @@ import {preferences} from '@/shared/storage';
 
 import {useAppDispatch, useAppSelector, selectDeviceList} from '@/store';
 import {setTargetDevice} from '@/store/slices';
-import ProfileCardHeader from '@/features/main/ProfileCardHeader';
 import ProfileSelector from '@/features/main/ProfileSelector';
 import {OMAPIBridge} from '@/lpa/bridge/nativeModules';
 import {fontSize, iconSize, radius} from '@/shared/theme/tokens';
@@ -59,7 +58,7 @@ export default function SIMSelector() {
   }, [targetDevice, deviceList, dispatch]);
 
   return (
-    <TView flex={1} minHeight={0} backgroundColor="#0B1227">
+    <TView flex={1} minHeight={0} backgroundColor="$background">
       {/* Mounted once for the whole screen, outside the branch below.
           Rendering a sheet inside each branch means the Modal is unmounted and
           a different one mounted the instant the first reader connects — and
@@ -97,18 +96,17 @@ export default function SIMSelector() {
           </YStack>
         </ScrollView>
       ) : (
-        <TView flex={1} minHeight={0} key={deviceList.length} backgroundColor="#0B1227">
+        <TView flex={1} minHeight={0} key={deviceList.length} backgroundColor="$background">
           <SlotTabs
             tabs={deviceList.map(name => ({
               key: name,
-              label: Adapters[name].device.available
-                ? Adapters[name].device.displayName
-                : `${Adapters[name].device.displayName} · unavailable`,
+              label: Adapters[name].device.displayName,
+              available: Adapters[name].device.available,
             }))}
             selected={currentTab ?? ''}
             onSelect={setCurrentTab}
             onBluetooth={() => setBluetoothOpen(true)}
-            bluetoothActive={deviceList.some(name => Adapters[name].device.type === 'ble')}
+            bluetoothActive={deviceList.some(name => Adapters[name].device.type.startsWith('ble'))}
             emptyLabel={t('main:no_chip_detected')}
           />
           {selected && adapter != null && (
@@ -116,17 +114,10 @@ export default function SIMSelector() {
               {adapter.device.available ? (
                 // The gutters live here rather than in a PageContainer: the tab
                 // strip above must run edge to edge, so padding cannot wrap both.
-                <YStack
-                  flex={1}
-                  minHeight={0}
-                  key={selected}
-                  paddingHorizontal={16}
-                  paddingTop={14}
-                  gap={12}>
-                  <ProfileCardHeader deviceId={selected} />
+                <YStack flex={1} minHeight={0} key={selected} paddingHorizontal={20} paddingTop={4}>
                   <ProfileSelector deviceId={selected} />
                   {/* Footnotes to the list, not a call to action above it. */}
-                      </YStack>
+                </YStack>
               ) : (
                 <ScrollView bounces alwaysBounceVertical overScrollMode="always">
                   <YStack flex={1} paddingTop={20} gap={10}>
@@ -178,7 +169,7 @@ export default function SIMSelector() {
                         {t('main:open_stk_menu')}
                       </TText>
                     )}
-                          </YStack>
+                  </YStack>
                 </ScrollView>
               )}
             </YStack>

@@ -41,6 +41,7 @@ export function generateTamaguiTheme(
   const ramp = rampFor(baseTheme);
 
   const baseLightTheme = {
+    statusWarning: '#966000',
     background: ramp.bg,
     color: ramp.fg,
     borderColor: ramp.line,
@@ -50,6 +51,7 @@ export function generateTamaguiTheme(
   };
 
   const baseDarkTheme = {
+    statusWarning: '#E0AF57',
     background: ramp.bg,
     color: ramp.fg,
     borderColor: ramp.line,

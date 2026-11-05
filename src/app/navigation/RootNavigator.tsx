@@ -14,7 +14,6 @@ import Main from '@/features/main/MainScreen';
 import Scanner from '@/features/download/DownloadScreen';
 import Profile from '@/features/profile/ProfileScreen';
 import Settings from '@/features/settings/SettingsScreen';
-import Index from '@/features/stats/StatsScreen';
 import Notifications from '@/features/notifications/NotificationsScreen';
 import {useTheme} from 'tamagui';
 import {ToastProvider} from '@/app/providers/ToastProvider';
@@ -51,7 +50,6 @@ function StackNavigator() {
         component={Profile}
         options={TransitionPresets.SlideFromRightIOS}
       />
-      <Stack.Screen name="Stats" component={Index} options={TransitionPresets.SlideFromRightIOS} />
       <Stack.Screen
         name="EuiccInfo"
         component={EuiccInfo}

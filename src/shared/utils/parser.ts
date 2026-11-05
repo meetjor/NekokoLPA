@@ -2,7 +2,6 @@ import {countries} from '@/data/countryData';
 import {ProfileMetadataMap} from '@/lpa/types/profile';
 import {resolveMccMnc} from '@/data/mccMncResolver';
 import {TFunction} from 'i18next';
-import {countryList} from '@/shared/storage';
 // Color constants for tag rendering - using theme-agnostic values
 const TAG_COLORS = {
   red: {fg: '#dc2626', bg: '#fee2e2'},
@@ -115,14 +114,6 @@ export function parseMetadata(metadata: ProfileMetadataMap, t: TFunction, parseC
   }
 
   const mccMncInfo = resolveMccMnc(metadata.profileOwnerMccMnc);
-  try {
-    if (mccMncInfo.MCC) {
-      const lastValue = JSON.parse(countryList.getString(mccMncInfo.MCC) || '{}');
-      lastValue[metadata.profileOwnerMccMnc] =
-        mccMncInfo.Operator || metadata.serviceProviderName || metadata.profileOwnerMccMnc;
-      countryList.set(mccMncInfo.MCC, JSON.stringify(lastValue));
-    }
-  } catch (e) {}
 
   let countryEmoji = mccMncInfo.ISO1 ?? predictCountryForICCID(metadata.iccid).code;
   const countryMatch = nickname.match(/[🇦-🇿]{2}/u);

@@ -2,6 +2,13 @@
 
 基于 [iebb/NekokoLPA](https://github.com/iebb/NekokoLPA) 的个人定制 eSIM 管理应用。保留开源项目许可，不是官方 NekokoLPA 版本。
 
+## 1.1.0 极简 UI
+
+已完成石墨黑 / 科技蓝主题、新几何图标、精简首页与设置，保留每卡独立开关及原有基础功能，移除统计模块。源码版本为 1.1.0 / 405，构建与发布状态以 Actions 和 Releases 为准。
+
+- [1.1.0 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)（成功发布后可用）
+- [1.1.0 变更说明](docs/releases/1.1.0.md)
+
 ## 下载
 
 - [全部 Releases（包括测试版）](https://github.com/meetjor/NekokoLPA/releases)
@@ -9,7 +16,7 @@
 - [1.0.1 发布说明](https://github.com/meetjor/NekokoLPA/releases/tag/v1.0.1-qianlesim-3sign) · [构建与签名校验](https://github.com/meetjor/NekokoLPA/actions/runs/42004322468)
 - [上一版三证书可用测试版](https://github.com/meetjor/NekokoLPA/releases/tag/v1.14.401-custom-3sign-test2)
 
-当前维护版本为 **1.0.1（versionCode 404）**，GitHub 上仍标记为预发布版本。包名为 `ee.nekoko.nlpa1`，沿用 Sakura、Community、9eSIM 三证书签名。
+此前已验证切换的版本为 **1.0.1（versionCode 404）**，GitHub 上仍标记为预发布版本。包名为 `ee.nekoko.nlpa1`，沿用 Sakura、Community、9eSIM 三证书签名。
 
 ## 1.0.1 更新与验证
 
@@ -19,11 +26,11 @@
 - **2026-11-05 用户真机反馈：最新版已修复切换 Bug。** 此反馈确认原先切换后界面状态不更新的问题已解决；不代表所有设备或异常场景均已测试。
 - [开发接管与后续维护记录](docs/QianLesim-maintenance.md)
 - [开发者接管入口与项目约束（AGENTS.md）](AGENTS.md)
-- [下一版已确认的 UI 重构设计规范（尚未实施）](docs/QianLesim-UI-redesign.md)
+- [UI 重构设计规范](docs/QianLesim-UI-redesign.md)
 
 ## 特色
 
-- QianLesim 品牌界面与 eSIM 轨道标识、蓝紫深色主题
+- QianLesim 极简界面、几何 eSIM 标识，支持深浅色主题
 - eSIM 配置切换后自动同步界面，并继续读取 eUICC 状态进行确认
 - 遇到异常避免无限 Loading
 - 使用缓存的 GitHub Actions ARM64 编译流程

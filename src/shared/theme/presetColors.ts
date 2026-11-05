@@ -24,7 +24,7 @@ export const MATERIAL_YOU = 'my';
  * available because the accent is a user preference, and every screen uses it
  * for state rather than decoration, so any hue holds up.
  */
-export const DEFAULT_THEME_COLOR = '#598DFF';
+export const DEFAULT_THEME_COLOR = '#2889E8';
 
 /**
  * The pre-redesign default.
@@ -37,6 +37,7 @@ export const DEFAULT_THEME_COLOR = '#598DFF';
 export const LEGACY_DEFAULT_THEME_COLOR = '#813FF3';
 
 export const PRESET_COLORS: PresetColor[] = [
+  {value: '#2889E8', label: 'Tech Blue'},
   {value: '#598DFF', label: 'QianLe Blue'},
   {value: '#813FF3', label: 'Purple'},
   {value: '#6366F1', label: 'Indigo'},

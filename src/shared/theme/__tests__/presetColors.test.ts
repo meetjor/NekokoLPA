@@ -9,14 +9,14 @@ import {
 
 describe('accent presets', () => {
   it('defaults to azure, and azure is offered in the palette', () => {
-    expect(DEFAULT_THEME_COLOR).toBe('#0A84FF');
+    expect(DEFAULT_THEME_COLOR).toBe('#2889E8');
     expect(isPresetColor(DEFAULT_THEME_COLOR)).toBe(true);
-    expect(PRESET_COLORS[0]).toEqual({value: '#0A84FF', label: 'Azure'});
+    expect(PRESET_COLORS[0]).toEqual({value: '#2889E8', label: 'Tech Blue'});
   });
 
-  it('offers twelve distinct colours', () => {
-    expect(PRESET_COLORS).toHaveLength(12);
-    expect(new Set(PRESET_COLORS.map(c => c.value.toLowerCase())).size).toBe(12);
+  it('offers distinct colours', () => {
+    expect(PRESET_COLORS).toHaveLength(13);
+    expect(new Set(PRESET_COLORS.map(c => c.value.toLowerCase())).size).toBe(13);
   });
 });
 

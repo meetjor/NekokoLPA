@@ -17,7 +17,7 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前应用版本 | QianLesim 1.0.1，`package.json` 的 `buildVersion` 为 404，即 Android versionCode |
+| 当前源码版本 | QianLesim 1.1.0 / versionCode 405，UI 已实现并通过本地校验；CI / 发布状态需实时查询。上一真机验证基线为 1.0.1 / 404 |
 | 已发布 APK 的源码基线 | `9e6fcb2df377f1e0d4848581635526ccd73f4167`；后续文档提交不等于新 APK |
 | 构建 | [Actions 42004322468](https://github.com/meetjor/NekokoLPA/actions/runs/42004322468) 成功，含 TypeScript、ARM64 编译、签名校验和发布 |
 | 签名验证 | 既有 CI 日志确认 APK v2 有效，签名者数量为 3；不是本次本地重新验签 |
@@ -25,7 +25,7 @@
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
 | 已知未解决 Bug | 当前没有用户新报告的未解决故障；这不表示已经完成所有场景测试 |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | **用户已批准新的极简科技风 UI 重构方向，尚未实施。** 优先把设计转为可开发方案，详见 `docs/QianLesim-UI-redesign.md`；不要误称 UI 已上线。无待修复的已确认功能 Bug |
+| 当前下一步 | **1.1.0 极简 UI 已实现，本地 TypeScript、111 项测试和改动文件 ESLint 通过，待核实新 CI、签名与发布。** 模拟器不含真实 eUICC，新 UI 真机回归仍待用户确认 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -81,8 +81,8 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - **上面的 Gradle 产物不是最终三证书发布包。** 必须继续执行工作流的 `Apply public three-signer signature` 步骤：从 `variants/multisign/signing.sh` 提取至 9eSIM 的三签部分再签名。不要以 `variants/store/signing.sh` 或完整 multisign 脚本替代已验证的三签方案。
 - 以 `java -jar apksigner.jar verify --verbose --print-certs <APK>` 校验最终包；除校验成功和签名者数量为 3，还需比对[维护记录中的三枚证书 SHA-256](docs/QianLesim-maintenance.md)。不要只凭“有三个签名”判断集合正确。
 - 每次新应用发布同步递增 `package.json` 的 `version` 与 `buildVersion`，检查 Gradle 映射，并更新工作流的 APK 文件名、标签、标题、说明及 README 下载地址。
-- **当前发布工作流硬编码 1.0.1 标签，且该标签已存在。** 推送会触发发布的源码修改前，先安排新版本，避免编译成功后发布失败；不要覆盖或删除旧 Release 来规避版本管理。
-- 当前 push 过滤只有 `src/**` 与该工作流自身，限 `feature/qianlesim-v1`；单改 Android 或 package.json 不会自动触发，需按需求调整过滤或使用 `workflow_dispatch`。单改交接文档不应重新编译。
+- **当前发布工作流硬编码 1.1.0 标签；运行前先查询其是否已存在。** 推送会触发发布的源码修改前，先安排新版本，避免编译成功后发布失败；不要覆盖或删除旧 Release 来规避版本管理。
+- 当前 push 过滤包含 src、android、store 资源、package.json、yarn.lock、截图脚本和该工作流，限 `feature/qianlesim-v1`。单改交接文档不应重新编译。
 - 构建后核实实际 SHA、Actions 结论、最终签名、Release 资产及浏览器直达下载链接；在最终回复中分别报告源码检查、构建、签名、真机测试状态。
 - 真机回归应覆盖安装、读卡、双向切换、无需下拉刷新显示正确状态、Loading 结束；未执行的项目明确列出，不自行填写通过。
 
@@ -99,9 +99,18 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 ## 7. 当前获批的 UI 重构任务（2026-11-05）
 
 - **设计规范的唯一文字入口：** [`docs/QianLesim-UI-redesign.md`](docs/QianLesim-UI-redesign.md)。用户已对“深色、克制、平面几何、简洁科技感”的最新效果图表示认可，明确拒绝此前类似 AI 宣传海报的多层霓虹、玻璃反射、星空和装饰性山脉设计。
-- **这是新任务，不是已实现的 1.0.1 功能。** 本次交接文件更新不修改 UI 代码或 APK；Work 应先查源码与设计规范，规划实际重构及视觉回归测试，然后再实施。不要因为旧版 README 和当前页面仍显示蓝紫主题，就沿用已被否决的风格。
+- **1.1.0 已实现极简 UI；1.0.1 是旧视觉和已验证切换基线。** 需继续核实 CI 与实际 APK，不将实现完成当作发布/真机验证完成。
 - **行为必须保留：** 每张 eSIM 配置独立启用开关；点击目标配置直接发起原有启用流程，不添加“切换”总按钮或选卡弹窗。保留真实 SIM1/SIM2/eUICC 设备选择、可读卡、自动状态确认、Loading 清理和原版已有的安全保护逻辑。
-- **图标要重新设计：** 简洁可辨的几何 eSIM 芯片轮廓、少色、无轨道光环。当前 APK 图标是旧版，制作新图标时按 Android 启动图标和自适应图标要求检查，避免只换首页 React 组件却不换安装图标。保留 QianLesim 名称、包名和三证书签名。
+- **图标要重新设计：** 简洁可辨的几何 eSIM 芯片轮廓、少色、无轨道光环。1.1.0 已更新几何图标源文件 `assets/branding/qianlesim.svg`、React SVG 组件和 store 各密度图标；Gradle 使用自适应 `@mipmap/ic_launcher`。保留 QianLesim 名称、包名和三证书签名。
 - **不要编造功能和数据：** 用户批准的是视觉设计方向，效果图中的统计、切换历史、流量等可能只是示意。无可靠数据源时不得呈现虚假指标或新建无意义页面；现有界面功能应做真实可用的迁移。
 - **验收：** 以真实 Android 截图核对视觉（密度、留白、文字、图标、对齐、色彩）、直接启用/停用流程、不同数量配置、长名称、设备不可用、系统字体大小、Loading/读卡异常状态。最终仍需真机测试；不要宣称“与概念图一模一样”。
 - **开发顺序：** 阅读现有源码与导航 → 确认哪些概念元素可用 → 定义设计 Token 和组件 → 实现首页/配置/详情/设置 → 视觉与功能回归 → 递增版本并按现有缓存 CI 三签发布。避免因纯文档变动触发 APK 构建。
+
+## 8. 1.1.0 实施交接
+
+- 用户允许调整菜单名称、位置与层级；要求简洁明了，基础功能保留，**统计模块明确移除**。首页没有无意义的底部导航或全局切换按钮。
+- 已移除 StatsScreen、Stats 路由和 countryList 收藏统计写入，不清空历史本地存储。
+- 本次没有修改 `src/lpa/`、`src/store/`、Android 原生 OMAPI 或三签脚本。
+- 工作流增加 Jest、三枚证书指纹比对、发布 SHA 固定以及 Android 模拟器截图检查。对外仅发布三签 ARM64；额外 x86_64 Release 只用于无 eUICC 的模拟器页面检查，不对外发布。
+- 页面截图由 `scripts/capture-android-ui.py` 获取，覆盖深浅色首页/设置和放大字体，作为 `QianLesim-Android-UI` Actions artifact 保存。不得称这些截图证明真实读卡/切换已通过。
+- CI 结果、发布链接、用户真机反馈在获得后继续更新本文件与维护记录。

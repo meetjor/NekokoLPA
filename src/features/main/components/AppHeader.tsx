@@ -1,20 +1,20 @@
 import React from 'react';
-import {Text as TText, XStack, YStack} from 'tamagui';
-
-import {AppVersion} from '@/shared/config/app';
+import {Text, XStack, YStack} from 'tamagui';
+import {useTranslation} from 'react-i18next';
 import QianLeLogo from '@/shared/ui/QianLeLogo';
 
-export default function AppHeader(_props: {navigation?: unknown}) {
+export default function AppHeader() {
+  const {t} = useTranslation('main');
   return (
-    <XStack alignItems="center" gap={12} flex={1} minWidth={0}>
-      <QianLeLogo size={52} />
-      <YStack gap={4} flex={1} minWidth={0}>
-        <TText color="#F8F9FF" fontSize={23} fontWeight={'700' as any} numberOfLines={1}>
+    <XStack alignItems="center" gap={12} minWidth={0}>
+      <QianLeLogo size={42} />
+      <YStack gap={3} flex={1} minWidth={0}>
+        <Text color="$textDefault" fontSize={24} fontWeight="700" numberOfLines={1}>
           QianLesim
-        </TText>
-        <TText color="#B5BBF3" fontSize={13} numberOfLines={1}>
-          v{AppVersion} · 定制版
-        </TText>
+        </Text>
+        <Text color="$color6" fontSize={13}>
+          {t('ui_manager')}
+        </Text>
       </YStack>
     </XStack>
   );

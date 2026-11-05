@@ -3,8 +3,21 @@ name: QianLesim ARM64 Release (cached)
 on:
   push:
     branches: [feature/qianlesim-v1]
-    paths: [src/**, .github/workflows/qianlesim-release.yml]
+    paths:
+      [
+        src/**,
+        android/**,
+        variants/store/**,
+        package.json,
+        yarn.lock,
+        scripts/capture-android-ui.py,
+        .github/workflows/qianlesim-release.yml,
+      ]
   workflow_dispatch:
+
+concurrency:
+  group: qianlesim-release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -37,7 +50,9 @@ jobs:
           path: |
             android/app/.cxx
             android/app/build/intermediates/cxx
-          key: ${{ runner.os }}-native-arm64-v1-${{ hashFiles('yarn.lock', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-native-qianlesim-v2-${{ hashFiles('yarn.lock', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-native-arm64-v1-
       - name: Configure Android SDK
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses < /dev/null || true
@@ -48,6 +63,7 @@ jobs:
           corepack enable
           yarn install --immutable
           yarn type-check
+          yarn test --runInBand
       - name: Prepare build
         run: bash apply_variant.sh store
       - name: Assemble arm64 APK
@@ -58,28 +74,65 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          APK="$(find android/app/build/outputs/apk/release -type f -name '*.apk' -print -quit)"
+          APK="$(find android/app/build/outputs/apk/release -type f -name '*arm64*.apk' -print -quit)"
           test -n "$APK"
-          OUTPUT="$PWD/dist/QianLesim-v1.0.1-arm64.apk"
+          OUTPUT="$PWD/dist/QianLesim-v1.1.0-arm64.apk"
           sed -n '/^java -jar apksigner.jar sign/,/--next-signer --ks signer\/keys\/9esim.jks/p' variants/multisign/signing.sh > dist/sign-three.sh
           printf '  --out "%s" "%s"\n' "$OUTPUT" "$APK" >> dist/sign-three.sh
           bash dist/sign-three.sh
           java -jar apksigner.jar verify --verbose --print-certs "$OUTPUT" | tee dist/signing.txt
           grep -q 'Number of signers: 3' dist/signing.txt
+          grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' dist/signing.txt
+          for fingerprint in \
+            dd0dddbee79fc418ccf1523e670ff62f22926ed76a8ff50b1b63106195deab13 \
+            4139278aacce8338c03dc9a6b0172c1880e0a4949ff3e05292c2e781765026fa \
+            6966004ad0161165335f9204f8f5a52df49fe068c9545c0c589c23221af8d3a4; do
+            grep -q "certificate SHA-256 digest: $fingerprint" dist/signing.txt
+          done
+          (cd dist && sha256sum QianLesim-v1.1.0-arm64.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: QianLesim-3sign
-          path: dist/QianLesim-v1.0.1-arm64.apk
+          path: |
+            dist/QianLesim-v1.1.0-arm64.apk
+            dist/signing.txt
+            dist/SHA256SUMS.txt
           if-no-files-found: error
+          retention-days: 14
+      - name: Build x86_64 APK for UI checks (not published)
+        working-directory: android
+        run: bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=x86_64
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android UI smoke checks
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            adb install $(find android/app/build/outputs/apk/release -name '*x86_64*.apk' -print -quit)
+            python3 scripts/capture-android-ui.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: QianLesim-Android-UI
+          path: dist/ui/
+          if-no-files-found: warn
           retention-days: 14
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0.1-qianlesim-3sign \
-            dist/QianLesim-v1.0.1-arm64.apk \
+          gh release create v1.1.0-qianlesim-3sign \
+            dist/QianLesim-v1.1.0-arm64.apk dist/SHA256SUMS.txt dist/signing.txt \
             --repo "$GITHUB_REPOSITORY" \
-            --target feature/qianlesim-v1 \
-            --title 'QianLesim v1.0.1 - eSIM status fix (three-signer)' \
-            --notes 'QianLesim v1.0.1. A SIM refresh may drop OMAPI before delivering the APDU response. Now the UI enters a pending state before the command; the result is checked by reading the eUICC even if the switch call rejects. Duplicate switch replays are avoided. Same QianLesim UI, package ID, and public Sakura, Community, 9eSIM signature set. Real device verification required.' \
+            --target "$GITHUB_SHA" \
+            --title 'QianLesim v1.1.0 - Minimal UI (three-signer)' \
+            --notes-file docs/releases/1.1.0.md \
             --prerelease

@@ -1,59 +1,49 @@
 import React from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import {useTheme} from 'tamagui';
-import {radius} from '@/shared/theme/tokens';
 
-const TRACK_W = 51;
-const TRACK_H = 30;
-const THUMB = 24;
-
-/**
- * The platform-style switch used for profile enable/disable and settings.
- *
- * Hand-rolled rather than Tamagui's Switch so the track and thumb match the
- * design's exact geometry, and so the disabled state can dim without the
- * component swallowing the press.
- */
+/** A controlled switch with a full 48 dp touch target. State comes from the caller. */
 export default function Toggle({
   value,
   onPress,
   disabled = false,
+  label,
 }: {
   value: boolean;
   onPress: () => void;
   disabled?: boolean;
+  label?: string;
 }) {
   const theme = useTheme();
   return (
     <TouchableOpacity
       accessibilityRole="switch"
+      accessibilityLabel={label}
       accessibilityState={{checked: value, disabled}}
       activeOpacity={0.8}
       disabled={disabled}
       onPress={onPress}
       style={{
-        width: TRACK_W,
-        height: TRACK_H,
-        borderRadius: radius.pill,
-        padding: 3,
-        opacity: disabled ? 0.5 : 1,
+        minWidth: 56,
+        minHeight: 48,
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: value ? 'flex-end' : 'flex-start',
-        backgroundColor: value ? '#3C91FF' : '#303A60',
+        opacity: disabled ? 0.5 : 1,
+        flexShrink: 0,
       }}>
       <View
         style={{
-          width: THUMB,
-          height: THUMB,
-          borderRadius: radius.pill,
-          backgroundColor: theme.onFilled?.val ?? '#ffffff',
-          shadowColor: '#000',
-          shadowOpacity: 0.25,
-          shadowRadius: 2,
-          shadowOffset: {width: 0, height: 1},
-          elevation: 2,
-        }}
-      />
+          width: 48,
+          height: 28,
+          borderRadius: 20,
+          padding: 3,
+          alignItems: value ? 'flex-end' : 'flex-start',
+          backgroundColor: value ? theme.primaryColor?.val : theme.outlineDisabledHeavy?.val,
+        }}>
+        <View
+          style={{width: 22, height: 22, borderRadius: 11, backgroundColor: theme.onFilled?.val}}
+        />
+      </View>
     </TouchableOpacity>
   );
 }

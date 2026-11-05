@@ -3,7 +3,6 @@ import {ProfileMetadataMap} from '@/lpa/types/profile';
 
 export type RootStackParamList = {
   Main: {};
-  Stats: {};
   Settings: {};
   Notifications: {
     deviceId: string;

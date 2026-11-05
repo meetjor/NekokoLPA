@@ -50,16 +50,16 @@ export const lightRamp: Ramp = {
 };
 
 export const darkRamp: Ramp = {
-  bg: '#0A1126',
-  surface: '#1B2648',
-  surface2: '#263158',
-  line: '#35436E',
-  stripe: '#303B63',
-  fg: '#F4F6FF',
-  fg2: '#B5BFDE',
-  fg3: '#8290B7',
-  ok: '#39DE9A',
-  danger: '#ff6369',
+  bg: '#101820',
+  surface: '#1B2632',
+  surface2: '#253341',
+  line: '#344252',
+  stripe: '#2C3B49',
+  fg: '#F1F5F9',
+  fg2: '#A7B3C0',
+  fg3: '#8C9BAA',
+  ok: '#43CD88',
+  danger: '#E97880',
 };
 
 export function rampFor(scheme: 'light' | 'dark'): Ramp {

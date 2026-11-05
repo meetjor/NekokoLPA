@@ -1,8 +1,7 @@
 import React from 'react';
-import {Platform, ScrollView, TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import SafeScreen from '@/shared/ui/SafeScreen';
-import Nightscape from '@/shared/ui/Nightscape';
+import Screen from '@/shared/ui/Screen';
 import type {RootScreenProps} from '@/app/navigation/types';
 import {Text as TText, XStack, YStack} from 'tamagui';
 import {
@@ -16,7 +15,6 @@ import {
   Fingerprint,
   Palette,
   Image as ImageIcon,
-  ChevronLeft,
   RefreshCcw,
   CheckCircle,
 } from '@tamagui/lucide-icons';
@@ -68,12 +66,7 @@ const SettingsSection = ({
   return (
     <YStack gap={10} marginBottom={24}>
       <XStack paddingLeft={4} alignItems="center" gap={9}>
-        <YStack
-          width={3}
-          height={15}
-          backgroundColor="$primaryColor"
-          borderRadius={radius.pill}
-        />
+        <YStack width={3} height={15} backgroundColor="$primaryColor" borderRadius={radius.pill} />
         <SectionLabel>{title}</SectionLabel>
       </XStack>
       <RowGroup>
@@ -87,7 +80,7 @@ const SettingsSection = ({
   );
 };
 
-export default function Settings({navigation}: RootScreenProps<'Settings'>) {
+export default function Settings(_props: RootScreenProps<'Settings'>) {
   const {t} = useTranslation(['main']);
   const {setTheme} = useColorScheme();
 
@@ -182,84 +175,56 @@ export default function Settings({navigation}: RootScreenProps<'Settings'>) {
   };
 
   return (
-    <SafeScreen>
-      <YStack flex={1} backgroundColor="#0B1127">
-        <XStack alignItems="center" gap={14} paddingHorizontal={18} paddingTop={16} paddingBottom={16}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="返回"
-            onPress={() => navigation.goBack()}
-            style={{padding: 6}}>
-            <ChevronLeft size={27} color="#F4F5FF" />
-          </TouchableOpacity>
-          <TText color="#F4F5FF" fontSize={25} fontWeight={'700' as any}>
-            设置
-          </TText>
-        </XStack>
-
-        <ScrollView
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          style={{flex: 1}}
-          contentContainerStyle={{paddingHorizontal: 17, paddingTop: 14, paddingBottom: 150}}>
-          {SECTIONS.map(section => (
-            <SettingsSection
-              key={section.titleKey}
-              title={t(section.titleKey)}
-              items={filteredItems.filter(i => (section.keys as readonly string[]).includes(i.key))}
-              renderItem={renderItem}
-            />
-          ))}
-
-          <YStack marginBottom={23} gap={11}>
-            <XStack alignItems="center" gap={9} paddingHorizontal={5}>
-              <YStack width={3} height={15} backgroundColor="#70CAFF" borderRadius={radius.pill} />
-              <TText color="#7BD5FF" fontSize={16} fontWeight={'700' as any}>状态同步</TText>
-            </XStack>
-            <RowGroup>
-              <Row paddingVertical={17}>
-                <XStack alignItems="center" gap={14}>
-                  <RefreshCcw size={23} color="#61CAFF" />
-                  <YStack flex={1} gap={4}>
-                    <TText fontSize={fontSize.lg} color="#F0F2FF">切换后自动刷新</TText>
-                    <TText fontSize={12} color="#A1AFD3">切换成功后再次读取芯片状态</TText>
-                  </YStack>
-                  <CheckCircle size={22} color="#40E1A1" />
-                </XStack>
-              </Row>
-            </RowGroup>
-          </YStack>
-
-          <YStack gap={10} marginBottom={18}>
-            <XStack paddingLeft={4} alignItems="center" gap={9}>
-              <YStack width={3} height={15} backgroundColor="#70CAFF" borderRadius={radius.pill} />
-              <TText color="#7BD5FF" fontSize={16} fontWeight={'700' as any}>
-                关于 QianLesim
-              </TText>
-            </XStack>
-            <RowGroup>
-              <Row paddingVertical={17}>
-                <XStack alignItems="center" justifyContent="space-between" gap={12}>
-                  <TText color="#F3F5FF" fontSize={fontSize.lg}>版本</TText>
-                  <TText color="#BEC8EE" fontFamily={fontFamily.mono as any} fontSize={fontSize.md}>
-                    v{AppVersion} · 定制版
+    <Screen title={t('main:ui_settings')} keyboardAvoiding={false}>
+      <YStack paddingTop={8}>
+        {SECTIONS.map(section => (
+          <SettingsSection
+            key={section.titleKey}
+            title={t(section.titleKey)}
+            items={filteredItems.filter(i => (section.keys as readonly string[]).includes(i.key))}
+            renderItem={renderItem}
+          />
+        ))}
+        <YStack gap={10} marginBottom={24}>
+          <SectionLabel>{t('main:ui_status_sync')}</SectionLabel>
+          <RowGroup>
+            <Row paddingVertical={16}>
+              <XStack alignItems="center" gap={12}>
+                <RefreshCcw size={22} color="$color6" />
+                <YStack flex={1} gap={4}>
+                  <TText color="$textDefault" fontSize={fontSize.md}>
+                    {t('main:ui_auto_refresh')}
                   </TText>
-                </XStack>
-              </Row>
-              <Row paddingVertical={12}>
-                <TText fontSize={12} color="#9AA9CE">
-                  基于 NekokoLPA 开源项目 · 三证书兼容版
+                  <TText color="$color6" fontSize={fontSize.xs}>
+                    {t('main:ui_auto_refresh_hint')}
+                  </TText>
+                </YStack>
+                <CheckCircle size={21} color="$backgroundSuccess" />
+              </XStack>
+            </Row>
+          </RowGroup>
+        </YStack>
+        <YStack gap={10} marginBottom={16}>
+          <SectionLabel>{t('main:ui_about')}</SectionLabel>
+          <RowGroup>
+            <Row>
+              <XStack justifyContent="space-between" gap={12} flexWrap="wrap">
+                <TText color="$textDefault" fontSize={fontSize.md}>
+                  QianLesim
                 </TText>
-              </Row>
-            </RowGroup>
-          </YStack>
-        </ScrollView>
-
-        <YStack position="absolute" bottom={0} left={0} right={0} pointerEvents="none" opacity={0.75}>
-          <Nightscape height={105} footer />
+                <TText color="$color6" fontFamily={fontFamily.mono as any} fontSize={fontSize.sm}>
+                  v{AppVersion}
+                </TText>
+              </XStack>
+            </Row>
+            <Row>
+              <TText color="$color6" fontSize={fontSize.sm}>
+                {t('main:ui_open_source')}
+              </TText>
+            </Row>
+          </RowGroup>
         </YStack>
       </YStack>
-    </SafeScreen>
+    </Screen>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import {YStack} from 'tamagui';
 
-/** Deep-indigo grouped setting rows with hairline separators. */
+/** Theme-aware grouped setting rows with hairline separators. */
 export default function RowGroup({children}: {children: React.ReactNode}) {
   const items = React.Children.toArray(children).filter(Boolean);
   return (
@@ -9,7 +9,7 @@ export default function RowGroup({children}: {children: React.ReactNode}) {
       backgroundColor="$surfaceRow"
       borderWidth={1}
       borderColor="$borderColor"
-      borderRadius={18}
+      borderRadius={14}
       overflow="hidden">
       {items.map((child, index) => (
         <YStack
@@ -32,5 +32,9 @@ export function Row({
   paddingVertical?: number;
   paddingHorizontal?: number;
 }) {
-  return <YStack paddingVertical={paddingVertical} paddingHorizontal={paddingHorizontal}>{children}</YStack>;
+  return (
+    <YStack paddingVertical={paddingVertical} paddingHorizontal={paddingHorizontal}>
+      {children}
+    </YStack>
+  );
 }

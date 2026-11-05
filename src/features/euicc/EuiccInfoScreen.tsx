@@ -1,113 +1,121 @@
 import React from 'react';
-import {FlatList} from 'react-native';
+import {Platform, TouchableOpacity, ToastAndroid} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import Screen from '@/shared/ui/Screen';
-import type {RootScreenProps} from '@/app/navigation/types';
-import {Text, useTheme} from 'tamagui';
-import {View, TouchableOpacity, ToastAndroid} from 'react-native';
-import {useSelector} from 'react-redux';
-import {selectDeviceState} from '@/store';
+import {Text, XStack, YStack, useTheme} from 'tamagui';
+import {Copy, Cpu} from '@tamagui/lucide-icons';
 import Clipboard from '@react-native-clipboard/clipboard';
+import Screen from '@/shared/ui/Screen';
+import RowGroup, {Row} from '@/shared/ui/RowGroup';
+import {fontFamily} from '@/shared/theme/tokens';
+import SectionLabel from '@/shared/ui/SectionLabel';
+import type {RootScreenProps} from '@/app/navigation/types';
+import {useAppSelector, selectDeviceState} from '@/store';
 import {useFormatSize} from '@/shared/hooks/useFormatSize';
-import {fontFamily, fontSize, radius} from '@/shared/theme/tokens';
-import {preferences} from '@/shared/storage';
+import {usePreference} from '@/shared/hooks/usePreference';
 import {group, isRedactMode, maskEid} from '@/shared/utils/redact';
 
-export type EuiccInfoDataType = {
+interface InfoRow {
   key: string;
-  raw?: any;
-  rendered: any;
-  element?: any;
-};
+  value?: string;
+  raw?: string;
+}
 
-function EuiccInfo({route}: RootScreenProps<'EuiccInfo'>) {
-  const {deviceId} = route.params;
-  const DeviceState = useSelector(selectDeviceState(deviceId!));
-  const {t} = useTranslation(['main']);
+export default function EuiccInfo({route}: RootScreenProps<'EuiccInfo'>) {
+  const state = useAppSelector(selectDeviceState(route.params.deviceId));
+  const {t} = useTranslation('main');
   const theme = useTheme();
   const formatSize = useFormatSize();
-  const {eid, euiccAddress, euiccInfo2} = DeviceState;
-  const storedRedact = preferences.getString('redactMode');
-  const redactMode = isRedactMode(storedRedact) ? storedRedact : 'none';
-  const renderRow = (row: EuiccInfoDataType, t: any) => {
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          ToastAndroid.show('Value Copied', ToastAndroid.SHORT);
-          Clipboard.setString(row.raw ?? row.rendered);
-        }}>
-        {/* Rows sit inside one hairline group, so the divider comes from the
-            1px gap rather than a per-row border. */}
-        <View style={{backgroundColor: theme.surfaceRow?.val, paddingVertical: 11, paddingHorizontal: 14}}>
-          <View style={{flexDirection: 'row', alignItems: 'baseline', gap: 14}}>
-            <Text color="$color6" fontSize={fontSize.sm} numberOfLines={2} style={{flex: 1}}>
-              {t('main:euiccInfo_' + row.key)}
-            </Text>
-            {row.element ?? (
-              <Text
-                color="$textDefault"
-                fontFamily={fontFamily.mono as any}
-                fontSize={fontSize.sm}
-                style={{flex: 1, textAlign: 'right'}}>
-                {row.rendered ?? '[empty]'}
-              </Text>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const preference = usePreference('redactMode', 'medium');
+  const redact = isRedactMode(preference) ? preference : 'medium';
+  const {eid, euiccInfo2: info, euiccAddress: address} = state;
+  const memory = info?.extCardResource;
+  const size = (n: number | undefined) => (n == null ? undefined : formatSize(n));
+  const sections: {title: string; rows: InfoRow[]}[] = [
+    {
+      title: t('ui_device_identity'),
+      rows: [
+        {key: 'eid', value: eid ? group(maskEid(eid, redact)) : undefined, raw: eid},
+        {key: 'sasAcreditationNumber', value: info?.sasAcreditationNumber},
+        {key: 'svn', value: info?.svn},
+      ],
+    },
+    {
+      title: t('ui_device_storage'),
+      rows: [
+        {key: 'freeNonVolatileMemory', value: size(memory?.freeNonVolatileMemory)},
+        {key: 'freeVolatileMemory', value: size(memory?.freeVolatileMemory)},
+      ],
+    },
+    {
+      title: t('ui_device_technical'),
+      rows: [
+        {key: 'defaultDpAddress', value: address?.defaultDpAddress},
+        {key: 'rootDsAddress', value: address?.rootDsAddress},
+        {
+          key: 'euiccCiPKIdListForSigning',
+          value: info?.euiccCiPKIdListForSigning?.map(x => x.slice(0, 16)).join(', '),
+          raw: info?.euiccCiPKIdListForSigning?.join('\n'),
+        },
+        {
+          key: 'euiccCiPKIdListForVerification',
+          value: info?.euiccCiPKIdListForVerification?.map(x => x.slice(0, 16)).join(', '),
+          raw: info?.euiccCiPKIdListForVerification?.join('\n'),
+        },
+        {key: 'profileVersion', value: info?.profileVersion},
+        {key: 'globalplatformVersion', value: info?.globalplatformVersion},
+        {key: 'euiccFirmwareVer', value: info?.euiccFirmwareVer},
+      ],
+    },
+  ];
   return (
     <Screen
-      title={t('main:euiccInfo_euiccinfo')}
-      subtitle={t('main:euiccInfo_subtitle')}
-      keyboardAvoiding={false}
-      scrollViewProps={{nestedScrollEnabled: true}}>
-      <FlatList
-        style={{
-          backgroundColor: theme.borderColor?.val,
-          borderWidth: 1,
-          borderColor: theme.borderColor?.val,
-          borderRadius: radius.lg,
-          overflow: 'hidden',
-        }}
-        ItemSeparatorComponent={() => <View style={{height: 1}} />}
-        data={[
-          {key: 'eid', rendered: group(maskEid(eid, redactMode)), raw: eid},
-          {key: 'sasAcreditationNumber', rendered: euiccInfo2?.sasAcreditationNumber},
-          {key: 'svn', rendered: euiccInfo2?.svn},
-          {
-            key: 'freeNonVolatileMemory',
-            rendered: formatSize(euiccInfo2?.extCardResource.freeNonVolatileMemory),
-          },
-          {
-            key: 'freeVolatileMemory',
-            rendered: formatSize(euiccInfo2?.extCardResource.freeVolatileMemory),
-          },
-          {key: 'defaultDpAddress', rendered: euiccAddress?.defaultDpAddress},
-          {key: 'rootDsAddress', rendered: euiccAddress?.rootDsAddress},
-          {
-            key: 'euiccCiPKIdListForSigning',
-            rendered: euiccInfo2?.euiccCiPKIdListForSigning.map(x => x.substr(0, 16)).join(', '),
-            raw: euiccInfo2?.euiccCiPKIdListForSigning.join('\n'),
-          },
-          {
-            key: 'euiccCiPKIdListForVerification',
-            rendered: euiccInfo2?.euiccCiPKIdListForVerification
-              .map(x => x.substr(0, 16))
-              .join(', '),
-            raw: euiccInfo2?.euiccCiPKIdListForVerification.join('\n'),
-          },
-          {key: 'profileVersion', rendered: euiccInfo2?.profileVersion},
-          {key: 'globalplatformVersion', rendered: euiccInfo2?.globalplatformVersion},
-          {key: 'euiccFirmwareVer', rendered: euiccInfo2?.euiccFirmwareVer},
-        ]}
-        renderItem={({item}) => renderRow(item, t)}
-        keyExtractor={(item: EuiccInfoDataType) => item.key}
-        scrollEnabled={false}
-      />
+      title={t('ui_device_details')}
+      subtitle={t('ui_device_info_hint')}
+      keyboardAvoiding={false}>
+      <XStack alignItems="center" gap={12} marginBottom={24}>
+        <Cpu size={28} color={theme.primaryColor?.val} />
+        <YStack gap={4}>
+          <Text color="$textDefault" fontSize={18} fontWeight="600">
+            eUICC
+          </Text>
+          <Text color="$color6" fontSize={14}>
+            {t('ui_profile_count', {count: state.profiles?.length ?? 0})}
+          </Text>
+        </YStack>
+      </XStack>
+      {sections.map(section => (
+        <YStack key={section.title} gap={10} marginBottom={24}>
+          <SectionLabel>{section.title}</SectionLabel>
+          <RowGroup>
+            {section.rows.map(row => (
+              <TouchableOpacity
+                key={row.key}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('euiccInfo_' + row.key)}: ${row.value || t('ui_unknown')}`}
+                disabled={!row.raw && !row.value}
+                onPress={() => {
+                  Clipboard.setString(row.raw ?? row.value ?? '');
+                  if (Platform.OS === 'android')
+                    ToastAndroid.show(t('ui_copied'), ToastAndroid.SHORT);
+                }}>
+                <Row paddingVertical={16}>
+                  <XStack alignItems="center" gap={12}>
+                    <YStack flex={1} gap={7}>
+                      <Text color="$color6" fontSize={13}>
+                        {t('euiccInfo_' + row.key)}
+                      </Text>
+                      <Text color="$textDefault" fontSize={15} fontFamily={fontFamily.mono as any}>
+                        {row.value || t('ui_unknown')}
+                      </Text>
+                    </YStack>
+                    {(row.raw || row.value) && <Copy size={17} color={theme.color6?.val} />}
+                  </XStack>
+                </Row>
+              </TouchableOpacity>
+            ))}
+          </RowGroup>
+        </YStack>
+      ))}
     </Screen>
   );
 }
-
-export default EuiccInfo;

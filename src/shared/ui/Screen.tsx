@@ -6,7 +6,6 @@ import {Text as TText, useTheme, XStack} from 'tamagui';
 import {useTranslation} from 'react-i18next';
 
 import SafeScreen from '@/shared/ui/SafeScreen';
-import Title from '@/shared/ui/Title';
 import PageContainer from '@/shared/ui/PageContainer';
 import {fontSize, iconSize} from '@/shared/theme/tokens';
 
@@ -43,27 +42,33 @@ export default function Screen({
 
   return (
     <SafeScreen>
-      {canGoBack ? (
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={t('main:back')}
-          onPress={() => navigation.goBack()}
-          style={{alignSelf: 'flex-start', paddingLeft: 12, paddingRight: 16, paddingVertical: 10}}>
-          <XStack alignItems="center" gap={2}>
-            <ChevronLeft size={iconSize.md} color={theme.primaryColor?.val as string} />
-            <TText color="$primaryColor" fontSize={fontSize.lg}>
-              {t('main:back')}
-            </TText>
-          </XStack>
-        </TouchableOpacity>
+      <XStack alignItems="center" gap={8} paddingHorizontal={12} paddingTop={8} paddingBottom={16}>
+        {canGoBack && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('main:back')}
+            onPress={() => navigation.goBack()}
+            style={{width: 48, height: 48, alignItems: 'center', justifyContent: 'center'}}>
+            <ChevronLeft size={iconSize.md} color={theme.textDefault?.val as string} />
+          </TouchableOpacity>
+        )}
+        {title && (
+          <TText flex={1} color="$textDefault" fontSize={24} fontWeight="700">
+            {title}
+          </TText>
+        )}
+      </XStack>
+      {subtitle ? (
+        <TText paddingHorizontal={20} paddingBottom={16} color="$color6" fontSize={fontSize.sm}>
+          {subtitle}
+        </TText>
       ) : null}
-      {title ? <Title subtitle={subtitle}>{title}</Title> : null}
       {fixedHeader}
       <PageContainer
         horizontalPadding={horizontalPadding}
         keyboardAvoiding={keyboardAvoiding}
         scrollViewProps={scrollViewProps}
-        topPadding={subtitle && subtitle.trim().length > 0 ? 20 : 0}>
+        topPadding={0}>
         <>{children}</>
       </PageContainer>
     </SafeScreen>

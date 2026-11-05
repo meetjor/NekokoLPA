@@ -249,11 +249,8 @@ const ProfileRowComponent = ({
       renderLeftActions={renderLeftActions}
       overshootFriction={8}
       friction={2}
-      containerStyle={{backgroundColor: profile.selected ? '#1B2C54' : '#1C2442'}}>
-      <YStack
-        backgroundColor={profile.selected ? '#1B2C54' : '#1C2442'}
-        paddingHorizontal={14}
-        paddingVertical={15}>
+      containerStyle={{backgroundColor: theme.surfaceRow?.val}}>
+      <YStack backgroundColor="$surfaceRow" paddingHorizontal={14} paddingVertical={15}>
         {profile.selected && (
           <YStack
             position="absolute"
@@ -269,7 +266,7 @@ const ProfileRowComponent = ({
             width={40}
             height={40}
             borderRadius={radius.md}
-            backgroundColor="#29365F"
+            backgroundColor="$surfaceSpecial"
             alignItems="center"
             justifyContent="center"
             overflow="hidden">
@@ -280,7 +277,11 @@ const ProfileRowComponent = ({
             )}
           </YStack>
 
-          <Pressable style={{flex: 1}} onPress={handleProfilePress}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={displayName}
+            style={{flex: 1, minWidth: 0}}
+            onPress={handleProfilePress}>
             <YStack gap={1}>
               <XStack alignItems="center" gap={8}>
                 <Image
@@ -289,7 +290,7 @@ const ProfileRowComponent = ({
                 />
                 <Text
                   color="$textDefault"
-                  fontSize={fontSize.xl}
+                  fontSize={fontSize.lg}
                   fontWeight={'600' as any}
                   numberOfLines={1}
                   flexShrink={1}>
@@ -307,24 +308,41 @@ const ProfileRowComponent = ({
                   width={8}
                   height={8}
                   borderRadius={radius.pill}
-                  backgroundColor={syncError || syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#8493BD'}
+                  backgroundColor={
+                    syncError || syncing
+                      ? '$statusWarning'
+                      : profile.selected
+                      ? '$backgroundSuccess'
+                      : '$color9'
+                  }
                 />
                 <Text
                   fontSize={fontSize.xs}
                   fontWeight={'600' as any}
-                  color={syncError || syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#9AA6CE'}>
+                  color={
+                    syncError || syncing
+                      ? '$statusWarning'
+                      : profile.selected
+                      ? '$backgroundSuccess'
+                      : '$color6'
+                  }>
                   {syncError
-                    ? '状态未确认 · 请下拉刷新'
+                    ? t('main:ui_sync_unknown')
                     : syncing
-                      ? '切换中 · 正在核实状态'
-                      : (profile.selected ? '已启用 · 当前使用' : '未启用')}
+                    ? t('main:ui_sync_pending')
+                    : t(profile.selected ? 'main:ui_enabled' : 'main:ui_disabled')}
                 </Text>
               </XStack>
               <ProfileTags tags={tags} stealthMode={stealthMode} />
             </YStack>
           </Pressable>
 
-          <Toggle value={profile.selected} disabled={isLoading} onPress={handleSwitchChange} />
+          <Toggle
+            label={`${displayName} · ${t('main:profile_state')}`}
+            value={profile.selected}
+            disabled={isLoading}
+            onPress={handleSwitchChange}
+          />
         </XStack>
       </YStack>
     </Swipeable>

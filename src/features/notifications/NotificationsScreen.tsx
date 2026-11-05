@@ -201,6 +201,13 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
       title={t('main:notifications_notifications')}
       subtitle={t('main:notifications_subtitle')}>
       <YStack gap={16}>
+        {notifications && sorted.length === 0 && (
+          <YStack padding={24} backgroundColor="$surfaceRow" borderRadius={14}>
+            <Text color="$color6" fontSize={15}>
+              {t('main:ui_no_notifications')}
+            </Text>
+          </YStack>
+        )}
         {groups.map(group => (
           <YStack key={group.host} gap={8}>
             <XStack
