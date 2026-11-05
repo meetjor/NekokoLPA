@@ -70,16 +70,19 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
         style={{
           marginBottom: 10,
           borderRadius: radius.lg,
-          borderWidth: item.selected ? 1.5 : 1,
-          borderColor: item.selected ? theme.primaryColor?.val : theme.borderColor?.val,
-          backgroundColor: theme.surfaceRow?.val,
+          borderWidth: item.selected ? 1.8 : 1,
+          borderColor: item.selected ? '#54C8FF' : '#3E4A76',
+          backgroundColor: item.selected ? '#1B2C54' : '#1C2442',
           overflow: 'hidden',
-          elevation: item.selected ? 2 : 0,
+          shadowColor: item.selected ? '#428CFF' : '#000000',
+          shadowOpacity: item.selected ? 0.32 : 0.08,
+          shadowRadius: item.selected ? 14 : 3,
+          elevation: item.selected ? 7 : 1,
         }}>
-        <ProfileRow deviceId={deviceId} profile={item} />
+        <ProfileRow deviceId={deviceId} profile={item} syncing={DeviceState.switchSyncing === true} />
       </TView>
     ),
-    [deviceId, theme.primaryColor?.val, theme.borderColor?.val, theme.surfaceRow?.val],
+    [deviceId, DeviceState.switchSyncing],
   );
 
   return (

@@ -83,7 +83,15 @@ const ProfileSubtitle = React.memo(
   },
 );
 
-const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId: string}) => {
+const ProfileRowComponent = ({
+  profile,
+  deviceId,
+  syncing = false,
+}: {
+  profile: ProfileExt;
+  deviceId: string;
+  syncing?: boolean;
+}) => {
   const {t} = useTranslation(['main']);
   const adapter = Adapters[deviceId];
   const {setLoading, isLoading} = useLoading();
@@ -239,8 +247,11 @@ const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId
       renderLeftActions={renderLeftActions}
       overshootFriction={8}
       friction={2}
-      containerStyle={{backgroundColor: theme.surfaceRow?.val}}>
-      <YStack backgroundColor="$surfaceRow" paddingHorizontal={14} paddingVertical={13}>
+      containerStyle={{backgroundColor: profile.selected ? '#1B2C54' : '#1C2442'}}>
+      <YStack
+        backgroundColor={profile.selected ? '#1B2C54' : '#1C2442'}
+        paddingHorizontal={14}
+        paddingVertical={15}>
         {profile.selected && (
           <YStack
             position="absolute"
@@ -256,7 +267,7 @@ const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId
             width={40}
             height={40}
             borderRadius={radius.md}
-            backgroundColor="$surfaceSpecial"
+            backgroundColor="#29365F"
             alignItems="center"
             justifyContent="center"
             overflow="hidden">
@@ -289,18 +300,20 @@ const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId
                 displaySubtitle={displaySubtitle}
                 stealthMode={stealthMode}
               />
-              <XStack alignItems="center" gap={6} paddingTop={3}>
+              <XStack alignItems="center" gap={7} paddingTop={5}>
                 <YStack
-                  width={7}
-                  height={7}
+                  width={8}
+                  height={8}
                   borderRadius={radius.pill}
-                  backgroundColor={profile.selected ? '$primaryColor' : '$color9'}
+                  backgroundColor={syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#8493BD'}
                 />
                 <Text
                   fontSize={fontSize.xs}
                   fontWeight={'600' as any}
-                  color={profile.selected ? '$primaryColor' : '$color9'}>
-                  {t(profile.selected ? 'main:profile_state_enabled' : 'main:profile_state_disabled')}
+                  color={syncing ? '#FFC879' : profile.selected ? '#38E19A' : '#9AA6CE'}>
+                  {syncing
+                    ? '已切换 · 正在确认状态'
+                    : t(profile.selected ? 'main:profile_state_enabled' : 'main:profile_state_disabled')}
                 </Text>
               </XStack>
               <ProfileTags tags={tags} stealthMode={stealthMode} />
@@ -317,6 +330,7 @@ const ProfileRowComponent = ({profile, deviceId}: {profile: ProfileExt; deviceId
 export const ProfileRow = React.memo(
   ProfileRowComponent,
   (prevProps, nextProps) =>
+    prevProps.syncing === nextProps.syncing &&
     prevProps.profile.iccid === nextProps.profile.iccid &&
     prevProps.profile.profileState === nextProps.profile.profileState &&
     prevProps.profile.profileNickname === nextProps.profile.profileNickname &&

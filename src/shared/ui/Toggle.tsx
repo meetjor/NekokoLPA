@@ -3,9 +3,9 @@ import {TouchableOpacity, View} from 'react-native';
 import {useTheme} from 'tamagui';
 import {radius} from '@/shared/theme/tokens';
 
-const TRACK_W = 46;
-const TRACK_H = 27;
-const THUMB = 22;
+const TRACK_W = 51;
+const TRACK_H = 30;
+const THUMB = 24;
 
 /**
  * The platform-style switch used for profile enable/disable and settings.
@@ -39,7 +39,7 @@ export default function Toggle({
         opacity: disabled ? 0.5 : 1,
         justifyContent: 'center',
         alignItems: value ? 'flex-end' : 'flex-start',
-        backgroundColor: value ? theme.primaryColor?.val : theme.surfaceSpecial?.val,
+        backgroundColor: value ? '#3C91FF' : '#303A60',
       }}>
       <View
         style={{

@@ -1,26 +1,13 @@
 import React from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
-import {Text as TText, useTheme, XStack, YStack} from 'tamagui';
+import {Text, XStack, YStack} from 'tamagui';
 import {Bluetooth} from '@tamagui/lucide-icons';
-
-import {fontSize, iconSize} from '@/shared/theme/tokens';
 
 export interface SlotTab {
   key: string;
   label: string;
 }
 
-/**
- * The reader/slot switcher that sits under the header.
- *
- * Up to three tabs share the width evenly; beyond that they keep their natural
- * width and the strip scrolls, because four equal tabs on a phone truncate
- * every label to the point of uselessness.
- *
- * The selected tab is marked by a 2px underline that overlaps the strip's
- * bottom border (hence `marginBottom: -1`), so the indicator and the rule read
- * as one line rather than two stacked ones.
- */
 export default function SlotTabs({
   tabs,
   selected,
@@ -36,72 +23,71 @@ export default function SlotTabs({
   bluetoothActive?: boolean;
   emptyLabel: string;
 }) {
-  const theme = useTheme();
   const scrolls = tabs.length > 3;
-
-  const tab = (t: SlotTab) => {
-    const active = t.key === selected;
+  const renderTab = (tab: SlotTab) => {
+    const active = tab.key === selected;
     return (
       <TouchableOpacity
-        key={t.key}
+        key={tab.key}
+        onPress={() => onSelect(tab.key)}
         accessibilityRole="tab"
         accessibilityState={{selected: active}}
-        onPress={() => onSelect(t.key)}
         style={{
           flex: scrolls ? undefined : 1,
-          maxWidth: scrolls ? 150 : undefined,
-          paddingVertical: 18,
-          paddingHorizontal: scrolls ? 14 : 10,
-          marginBottom: -1,
-          borderBottomWidth: 2,
-          borderBottomColor: active ? theme.primaryColor?.val : 'transparent',
+          minWidth: scrolls ? 115 : 0,
+          paddingHorizontal: 13,
+          paddingTop: 18,
+          paddingBottom: 15,
+          alignItems: 'center',
+          borderBottomWidth: 3,
+          borderBottomColor: active ? '#59CEFF' : 'transparent',
         }}>
-        <TText
+        <Text
+          color={active ? '#68D5FF' : '#9AA5C8'}
           numberOfLines={1}
-          textAlign="center"
-          color={active ? '$primaryColor' : '$color9'}
-          fontSize={fontSize.lg}
-          fontWeight={(active ? '600' : '500') as any}>
-          {t.label}
-        </TText>
+          fontSize={15}
+          fontWeight={(active ? '700' : '500') as any}>
+          {tab.label.replace(' · unavailable', ' · 不可用')}
+        </Text>
       </TouchableOpacity>
     );
   };
 
   return (
-    <XStack borderBottomWidth={1} borderBottomColor="$borderColor" alignItems="stretch">
+    <XStack
+      marginHorizontal={14}
+      marginTop={10}
+      marginBottom={10}
+      backgroundColor="#192343"
+      borderWidth={1}
+      borderColor="#374872"
+      borderRadius={15}
+      overflow="hidden"
+      alignItems="stretch">
       <YStack flex={1} minWidth={0}>
         {tabs.length === 0 ? (
-          <XStack alignItems="center" paddingHorizontal={16} paddingVertical={18}>
-            <TText color="$color9" fontSize={fontSize.sm}>
-              {emptyLabel}
-            </TText>
-          </XStack>
+          <Text color="#AAB4D4" padding={16}>{emptyLabel}</Text>
         ) : scrolls ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {tabs.map(tab)}
+            {tabs.map(renderTab)}
           </ScrollView>
         ) : (
-          <XStack>{tabs.map(tab)}</XStack>
+          <XStack flex={1}>{tabs.map(renderTab)}</XStack>
         )}
       </YStack>
-
       {onBluetooth && (
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Bluetooth readers"
           onPress={onBluetooth}
           style={{
-            width: 58,
+            width: 55,
             alignItems: 'center',
             justifyContent: 'center',
             borderLeftWidth: 1,
-            borderLeftColor: theme.borderColor?.val,
+            borderLeftColor: '#34456E',
           }}>
-          <Bluetooth
-            size={iconSize.md}
-            color={(bluetoothActive ? theme.primaryColor?.val : theme.color9?.val) as string}
-          />
+          <Bluetooth size={23} color={bluetoothActive ? '#69CDFF' : '#AAB4DB'} />
         </TouchableOpacity>
       )}
     </XStack>

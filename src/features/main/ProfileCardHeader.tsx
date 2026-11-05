@@ -219,18 +219,18 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
           the two actions live in a hairline-separated footer rather than as
           floating icon buttons, so the card reads as one object. */}
       <YStack
-        backgroundColor="$surfaceRow"
+        backgroundColor="#1C2648"
         borderWidth={1}
-        borderColor="$borderColor"
-        borderRadius={radius.lg}
+        borderColor="#3B4975"
+        borderRadius={18}
         overflow="hidden">
-        <YStack padding={16} gap={12}>
+        <YStack padding={17} gap={12}>
           <XStack alignItems="center" gap={11}>
             <YStack
               width={42}
               height={42}
               borderRadius={radius.md}
-              backgroundColor="$surfaceSpecial"
+              backgroundColor="#293A78"
               alignItems="center"
               justifyContent="center">
               <Cpu size={22} color={theme.primaryColor?.val as string} />
@@ -242,7 +242,7 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
               </TText>
             </YStack>
             <XStack
-              backgroundColor="$surfaceSpecial"
+              backgroundColor="#34326F"
               paddingHorizontal={10}
               paddingVertical={6}
               borderRadius={radius.pill}>
@@ -283,24 +283,34 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
           </XStack>
         </YStack>
 
-        <XStack backgroundColor="$borderColor" gap={1} borderTopWidth={1} borderTopColor="$borderColor">
+        <XStack backgroundColor="#3A4773" gap={1} borderTopWidth={1} borderTopColor="#3A4773">
           <TouchableOpacity
-            style={{flex: 1, backgroundColor: theme.surfaceRow?.val, padding: 12}}
+            style={{
+              flex: 1,
+              backgroundColor: '#263D85',
+              paddingVertical: 14,
+              paddingHorizontal: 10,
+            }}
             onPress={() => navigation.navigate('Scanner', {deviceId})}>
             <TText
               textAlign="center"
-              color="$primaryColor"
+              color="#E9EFFF"
               fontSize={fontSize.md}
               fontWeight={'600' as any}>
               {t('main:add_profile')}
             </TText>
           </TouchableOpacity>
           <TouchableOpacity
-            style={{flex: 1, backgroundColor: theme.surfaceRow?.val, padding: 12}}
+            style={{
+              flex: 1,
+              backgroundColor: '#252E55',
+              paddingVertical: 14,
+              paddingHorizontal: 10,
+            }}
             onPress={() => setEuiccMenu(true)}>
             <TText
               textAlign="center"
-              color="$color6"
+              color="#C8D3FA"
               fontSize={fontSize.md}
               fontWeight={'500' as any}>
               {t('main:manage')}
