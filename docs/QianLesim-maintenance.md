@@ -1,0 +1,44 @@
+# QianLesim 维护记录
+
+## 2026-11-05 开发接管
+
+维护分支：`feature/qianlesim-v1`。本次核实的应用源码基线为 `9e6fcb2df377f1e0d4848581635526ccd73f4167`，版本 1.0.1 / versionCode 404。
+
+用户在本次源码审查期间明确反馈：“最新版已经修复切换的bug”。据此保留当前已获真机反馈的实现，不继续修改切换逻辑，不重复构建或发布新 APK。本次提交仅更新文档。
+
+### 已核实证据
+
+- [构建 42004322468](https://github.com/meetjor/NekokoLPA/actions/runs/42004322468)：build job 成功，检出的提交为上述源码基线；TypeScript、ARM64 编译、签名校验和发布步骤均成功。
+- [1.0.1 Release](https://github.com/meetjor/NekokoLPA/releases/tag/v1.0.1-qianlesim-3sign)：已发布的预发布版本，资产为 `QianLesim-v1.0.1-arm64.apk`，大小 62,069,727 字节。
+- 发布资产 SHA-256：`6a640572919cc1f8fb2d1e8ba013760c67d01079e6ef255f841ce76ed1949150`。
+- 构建日志中 `apksigner verify` 显示 `Verifies`、v2=true、`Number of signers: 3`。这是对既有 CI 校验日志的核实，本次没有另行下载 APK 重新验签。
+- 用户确认最新版切换 Bug 已修复；此前用户已确认三证书版本可读取 eSIM 并实际切换。尚无跨设备、断连、连续切换等完整回归结果。
+
+签名证书 SHA-256（按该构建输出顺序）：
+
+1. `dd0dddbee79fc418ccf1523e670ff62f22926ed76a8ff50b1b63106195deab13`
+2. `4139278aacce8338c03dc9a6b0172c1880e0a4949ff3e05292c2e781765026fa`
+3. `6966004ad0161165335f9204f8f5a52df49fe068c9545c0c589c23221af8d3a4`
+
+### 源码审查与边界问题
+
+以下为代码行为与后续排查线索，**不是已复现的当前故障，也不推翻用户的真机反馈**。
+
+- `src/lpa/core/lpa.ts`：`profileOperation()` 检查 ES10c 结果码，仅 `00` 正常返回；`dispatcher.ts` 在该调用完成后返回 `{result: 0}`。当前代码能区分协议操作返回成功和抛出异常，但异常本身不能证明卡上未执行。
+- `src/lpa/adapters/Adapter.ts`：1.0.1 在命令执行前调用 `showExpectedState()`，会把目标配置写为启用并标记同步中。该状态是预期状态，不是硬件确认。若未来调整，应该将“待核实目标”和“最后一次真实读卡状态”分开，避免在未知结果时呈现确定的成功。
+- 同文件：普通 `getProfiles(true)` 会递增 `switchGeneration` 并清除同步标记；切换后的验证使用 `getProfiles(false)` 并比较目标状态。普通刷新或重命名引发的读卡可能使后台验证失效，需要在复现时结合时序日志判断。
+- 手动下拉刷新调用 `adapter.refresh()`：读取 eUICC 信息后读取并发布配置，异常时尝试 `initialize()`。自动验证也先读 eUICC 信息，但随后只在目标状态匹配时发布结果，采用不同的失败处理及后台重试路径。两者并非完全相同。
+- `src/lpa/adapters/OmapiDevice.ts` 的连接/重连方法只返回可用标记，没有直接重建原生通道。`src/lpa/bridge/runtime.ts` 缓存每设备 dispatcher，将传输异常转成 `6000` 状态字。重新 setup dispatcher 不等于重新打开 OMAPI 通道。
+- `android/app/src/main/java/ee/nekoko/nlpa/NekokoLPA.kt`：原生 `transceiveOMAPI()` 在部分 I/O、通道异常及 `6d00` 情况下重连并重发同一 APDU。因此 Adapter 层的“不重发切换命令”不等于底层从不重发。不要未经真机证据就扩大修改，也不要在排查时忽略这一层。
+- `src/store/slices.ts` 使用 Immer 合并设备状态；`ProfileSelector` 根据 profiles 引用重新映射 selected，状态标记也包含在 renderItem 依赖中；`ProfileRow` 的 memo 比较包括 profileState、syncing、syncError。当前没有证据能把原故障归因于 React.memo 或 FlatList。
+- 现有日志尚不足以完整关联命令、卡状态、Redux 和最终渲染。若故障复现，再增加关联日志；不得记录完整 ICCID、EID、激活码或 APDU 载荷到公开诊断资料。
+
+### 后续维护约束
+
+- 保留 `QianLesim` 大小写、`ee.nekoko.nlpa1` 包名以及 Sakura / Community / 9eSIM 三证书集合。
+- 保留已确认的深蓝紫界面和 eSIM 轨道图标，优先最小功能修复。
+- 不删除 eSIM 配置来测试，不把点击切换当作硬件已切换。
+- 后续应用发布需同步更新 package.json 的 version/buildVersion、工作流版本与发布说明，先 TypeScript 校验，再构建、验签、核实 Release 资产。
+- 当前 release workflow 的 push 路径过滤仅包含 `src/**` 与工作流自身；单独修改 Android 原生代码或 package.json 不会自动触发此工作流，届时需调整路径过滤或手动触发。
+- 当前工作流硬编码 1.0.1 发布标签，继续推送源码前必须安排新版本，避免构建后因旧标签已存在导致发布失败。本次文档提交不触发该发布工作流。
+- 需要回归时，覆盖安装后确认可读卡，再双向切换，观察无需下拉刷新即可显示正确状态及 Loading 正常结束；用户本次没有提供这些逐项测试记录，不自行补写为已通过。
