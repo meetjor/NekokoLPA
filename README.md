@@ -19,6 +19,7 @@
 - **2026-11-05 用户真机反馈：最新版已修复切换 Bug。** 此反馈确认原先切换后界面状态不更新的问题已解决；不代表所有设备或异常场景均已测试。
 - [开发接管与后续维护记录](docs/QianLesim-maintenance.md)
 - [开发者接管入口与项目约束（AGENTS.md）](AGENTS.md)
+- [下一版已确认的 UI 重构设计规范（尚未实施）](docs/QianLesim-UI-redesign.md)
 
 ## 特色
 
