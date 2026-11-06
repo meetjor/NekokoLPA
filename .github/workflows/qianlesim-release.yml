@@ -148,7 +148,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Android UI smoke checks
+      - name: Android 15 UI smoke checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -158,7 +158,18 @@ jobs:
           disable-animations: true
           script: |
             adb install $(find android/app/build/outputs/apk/release -name '*x86_64*.apk' -print -quit)
-            python3 scripts/capture-android-ui.py --notification-fixture
+            QL_UI_OUTPUT=dist/ui/api-35 python3 scripts/capture-android-ui.py --notification-fixture
+      - name: Android 14 UI and system-bar checks
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            adb install $(find android/app/build/outputs/apk/release -name '*x86_64*.apk' -print -quit)
+            QL_UI_OUTPUT=dist/ui/api-34 python3 scripts/capture-android-ui.py --notification-fixture
       - uses: actions/upload-artifact@v4
         if: always()
         with:

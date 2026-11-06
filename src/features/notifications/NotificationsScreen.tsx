@@ -221,13 +221,13 @@ export default function Notifications({route}: RootScreenProps<'Notifications'>)
                         minHeight: 48,
                         padding: 10,
                         borderRadius: radius.md,
-                        backgroundColor: theme.colorFocus?.val,
+                        backgroundColor: theme.btnBackground?.val,
                         opacity: disabled ? 0.5 : 1,
                       }}>
                       <XStack gap={6} alignItems="center" justifyContent="center" flex={1}>
-                        <Send size={17} color={theme.primaryColor?.val} />
+                        <Send size={17} color={theme.btnForeground?.val} />
                         <Text
-                          color="$primaryColor"
+                          color="$btnForeground"
                           fontSize={fontSize.sm}
                           flexShrink={1}
                           textAlign="center">

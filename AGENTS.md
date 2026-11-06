@@ -17,7 +17,7 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.2 / versionCode 407，七项问题复核与通知页修复，待本次 CI；上个已发布版本 1.1.1 |
+| 当前源码版本 | QianLesim 1.1.3 / versionCode 408，补旧版 Android 状态栏；1.1.2 已通过构建、验签和通知 UI 检查并发布 |
 | 已发布 APK 的源码基线 | `696398a53a0b928aff9a9d06765c9616e9bddb1a`；后续文档提交不等于新 APK |
 | 构建 | [Actions 42176030819](https://github.com/meetjor/NekokoLPA/actions/runs/42176030819) 构建/发布成功，含 TypeScript、147 项 Jest、9 项原生 HTTPS 测试、ARM64 编译、三签指纹校验及模拟器页面检查 |
 | 签名验证 | 1.1.1 CI 与下载产物独立验签均确认 APK v2 有效，3 枚证书指纹匹配既有集合；Release 资产哈希与本地一致 |
@@ -142,3 +142,9 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 通知页改为卡片内按钮，移除透明滑动内容引起的红绿底层穿透，补完整中文和大字体布局。移除的是通知，不是配置；仍只在发送成功后移除。
 - 模拟器使用合成通知，注入仅在 ARM64 正式包已签名之后的非发布 x86_64 检查构建。不要把模拟通知当作真机截图，也不要把注入代码加入正式入口。
 - 本地 162 项 Jest / TypeScript 通过；发布结论待本次 CI 核实。真机切换/外接读卡器/下载仍需反馈。
+
+## 12. 1.1.3 收尾
+
+- Android 15 自动启用 edge-to-edge，但较旧系统默认不启用，可能造成浅色页面黑状态栏深色文字；通过 RN Gradle `edgeToEdgeEnabled=true` 统一行为，SafeScreen 继续处理安全区和图标色。
+- 通知发送按钮使用主题 btnBackground / btnForeground，CI 加入 Android 14 与 15 同 APK 页面检查。验证完成前不得声称旧系统真机问题已确认解决。
+- 1.1.2 / 407 与 1.1.3 / 408 是独立构建版本，不覆盖先前标签或 APK；最终下载与证据将在收尾更新。

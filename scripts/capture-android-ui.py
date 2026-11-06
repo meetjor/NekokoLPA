@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Capture Android UI; optional synthetic notification fixture never touches a real card."""
 import re
+import os
 import sys
 import subprocess
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-OUT = Path('dist/ui')
+OUT = Path(os.environ.get('QL_UI_OUTPUT', 'dist/ui'))
 OUT.mkdir(parents=True, exist_ok=True)
 PACKAGE = 'ee.nekoko.nlpa1'
 FIXTURE = '--notification-fixture' in sys.argv

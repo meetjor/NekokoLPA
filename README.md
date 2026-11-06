@@ -2,9 +2,13 @@
 
 基于 [iebb/NekokoLPA](https://github.com/iebb/NekokoLPA) 的个人定制 eSIM 管理应用。保留开源项目许可，不是官方 NekokoLPA 版本。
 
-## 1.1.2 通知页与异常恢复（构建待核实）
+## 1.1.3 状态栏兼容（构建待核实）
 
-修正通知页红绿按钮穿透、文字重叠和中文缺失；补 USB/BLE 初始化与重连、通知结果和隐私边界。详见 [1.1.2 更新说明](docs/releases/1.1.2.md)。当前源码 1.1.2 / 407，下面 1.1.1 仍是上一版已核实下载。
+包含 1.1.2 的全部修复，补旧版 Android 浅色状态栏和通知按钮可读性，新增 Android 14 / 15 模拟器检查。详见 [1.1.3 更新说明](docs/releases/1.1.3.md)。
+
+## 1.1.2 通知页与异常恢复
+
+修正通知页红绿按钮穿透、文字重叠和中文缺失；补 USB/BLE 初始化与重连、通知结果和隐私边界。详见 [1.1.2 更新说明](docs/releases/1.1.2.md)。1.1.2 / 407 的构建、162 项 Jest、9 项 HTTPS 测试、验签和 Android 15 通知页检查已通过；已发布为预发布测试版，真机仍待反馈。
 
 ## 1.1.1 安全与异常恢复
 
@@ -19,10 +23,10 @@
 
 ## 下载
 
-- **[QianLesim 1.1.1 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.1-qianlesim-3sign/QianLesim-v1.1.1-arm64.apk)**
-- [1.1.1 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.1-qianlesim-3sign) · [构建、测试与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42176030819)
+- **[QianLesim 1.1.2 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.2-qianlesim-3sign/QianLesim-v1.1.2-arm64.apk)**
+- [1.1.2 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.2-qianlesim-3sign) · [构建、测试与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42210999769)
 
-1.1.1 已通过 TypeScript、147 项 Jest、9 项 Android 原生 HTTPS 测试、ARM64 构建、三枚签名指纹比对及无卡模拟器页面检查。下载产物已独立验签，与 Release 的 SHA-256 一致。请直接覆盖安装，再验证读卡和双向切换；无须卸载或删除 eSIM。真实运营商下载、外部读卡器和异常断连仍待测试。
+1.1.2 已通过 TypeScript、162 项 Jest、9 项 Android 原生 HTTPS 测试、ARM64 构建、三枚签名指纹比对及 Android 15 合成通知页面检查。下载产物已独立验签，与 Release 的 SHA-256 一致。请直接覆盖安装，再验证读卡和双向切换；无须卸载或删除 eSIM。真实运营商下载、外部读卡器和异常断连仍待测试。
 
 旧版本与历史验证：
 
