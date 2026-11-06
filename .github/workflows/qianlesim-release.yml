@@ -59,6 +59,8 @@ jobs:
         with:
           node-version: '24'
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
       - uses: actions/cache@v4
         with:
           path: |
@@ -90,9 +92,6 @@ jobs:
           yarn test --runInBand
       - name: Prepare build
         run: bash apply_variant.sh store
-      - name: Assemble arm64 APK
-        working-directory: android
-        run: bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
       - name: Android HTTPS security tests
         working-directory: android
         run: bash gradlew testReleaseUnitTest --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
@@ -102,6 +101,9 @@ jobs:
           name: QianLesim-Native-Tests
           path: android/app/build/test-results/testReleaseUnitTest/
           if-no-files-found: warn
+      - name: Assemble arm64 APK
+        working-directory: android
+        run: bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
       - name: Apply public three-signer signature
         shell: bash
         run: |

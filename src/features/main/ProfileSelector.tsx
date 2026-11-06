@@ -81,6 +81,8 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
     ],
   );
 
+  if (!adapter || adapter.obsolete) return null;
+
   return (
     <FlatList
       style={{

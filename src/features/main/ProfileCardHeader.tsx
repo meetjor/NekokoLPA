@@ -72,6 +72,8 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
         ]
       : []),
   ];
+  if (!adapter || adapter.obsolete) return null;
+
   return (
     <>
       <XStack

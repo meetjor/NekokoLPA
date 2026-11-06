@@ -355,7 +355,7 @@ class NekokoLPA(reactContext: ReactApplicationContext) : NativeNekokoLPASpec(rea
         Thread {
             try {
                 var chan = channelMappings[device]
-                if (chan == null || chan.isClosed) {
+                if (chan == null || !chan.isOpen) {
                     if (!connectChannel(device)) throw IOException("Channel unavailable")
                     chan = channelMappings[device]
                 }

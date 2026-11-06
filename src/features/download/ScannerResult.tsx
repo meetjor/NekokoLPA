@@ -45,7 +45,7 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
             </TText>
           </YStack>
 
-          {(downloadResult.refreshWarning || downloadResult.notificationWarning) && (
+          {!followupDone && (downloadResult.refreshWarning || downloadResult.notificationWarning) && (
             <YStack gap={8}>
               <TText color="$statusWarning">{t('main:ui_install_followup_warning')}</TText>
               <TButton onPress={() => makeLoading(setLoading, async () => {

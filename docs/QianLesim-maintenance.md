@@ -77,3 +77,5 @@
 ## 2026-11-06 · 1.1.1 实施，等待 CI
 
 按用户最新授权恢复自动构建。版本 1.1.1 / 406，详细范围见 [发布说明](releases/1.1.1.md)。保留 `ee.nekoko.nlpa1` 和三签，UI 未重做。审查 A1–A10 已做源码改进；测试使用假卡/假服务，没有执行真实卡删除。新增原生 HTTPS 测试须由 CI 核实，真实运营商下载、连续切换与读卡器断连仍待手机回归。
+
+首次 1.1.1 CI [42143287536](https://github.com/meetjor/NekokoLPA/actions/runs/42143287536) 在 Kotlin 编译中失败：OMAPI Channel 使用了不存在的 `isClosed`；已按 Android API 改为 `!isOpen`。本次没有生成或发布新 APK。补充设备移除期间页面空 adapter 保护，成功同步后移除待同步提示。HTTPS 原生测试前置到完整组装之前，并允许维护分支写入 Gradle 缓存，减少后续重复编译。

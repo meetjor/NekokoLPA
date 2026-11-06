@@ -246,10 +246,9 @@ export class Adapter {
   }
 
   /**
-   * A successful ES10c response is authoritative for the operation itself.
-   * Modems may then need a refresh/re-attach before GetProfiles reflects it.
-   * Publish the requested state immediately AFTER command success, and label
-   * it as syncing until a fresh eUICC read verifies the real state.
+   * Show the requested target as pending while a switch is attempted. This is
+   * never hardware confirmation: a fresh eUICC read must verify it before the
+   * syncing label is removed. Kept compatible with the device-tested flow.
    */
   private showExpectedState(expected: {iccid: string; enabled: boolean}): number {
     const generation = ++this.switchGeneration;

@@ -227,6 +227,8 @@ const ProfileRowComponent = ({
     [handleProfilePress, theme.backgroundSuccessLight?.val, theme.onFilled?.val],
   );
 
+  if (!adapter || adapter.obsolete) return null;
+
   return (
     <Swipeable
       renderRightActions={renderRightActions}
