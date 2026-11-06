@@ -17,15 +17,15 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.0 / versionCode 405，已完成 CI 并发布预发布 APK；上一真机验证基线为 1.0.1 / 404 |
+| 当前源码版本 | QianLesim 1.1.0 / versionCode 405，已完成 CI 并发布预发布 APK；用户已反馈本版真机可切换、未感受到问题（2026-11-06） |
 | 已发布 APK 的源码基线 | `c7d7f5989b06578711380bdd75134169282db81b`；后续文档提交不等于新 APK |
 | 构建 | [Actions 42056466890](https://github.com/meetjor/NekokoLPA/actions/runs/42056466890) 成功，含 TypeScript、111 项测试、ARM64 编译、三签指纹校验、Android 模拟器页面检查和发布 |
 | 签名验证 | 1.1.0 CI 日志确认 APK v2 有效，签名者数量为 3，且全部指纹匹配既有集合 |
-| 发布 | [v1.1.0-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)，标记预发布，待新 UI 真机回归 |
+| 发布 | [v1.1.0-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)，标记预发布；用户已确认本版可切换，其他场景未逐项验收 |
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
-| 已知未解决 Bug | 当前没有用户新报告的未解决故障；这不表示已经完成所有场景测试 |
+| 已知未解决 Bug | 用户未报告新故障；代码审查发现 TLS 校验、停用保护入口不一致及异常恢复等问题，详见[审查记录](docs/reviews/2026-11-06-code-review.md) |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | **1.1.0 极简 UI 已发布，自动化校验完成；等待用户覆盖安装后的真机反馈。** 模拟器不含真实 eUICC，新 UI 真机回归仍待用户确认 |
+| 当前下一步 | **本版用户真机切换正常。** 下一步按审查优先级改进安全与异常路径；不要将其误记成切换 Bug 复发 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -113,4 +113,11 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 本次没有修改 `src/lpa/`、`src/store/`、Android 原生 OMAPI 或三签脚本。
 - 工作流增加 Jest、三枚证书指纹比对、发布 SHA 固定以及 Android 模拟器截图检查。对外仅发布三签 ARM64；额外 x86_64 Release 只用于无 eUICC 的模拟器页面检查，不对外发布。
 - 页面截图由 `scripts/capture-android-ui.py` 获取，覆盖深浅色首页/设置和放大字体，作为 `QianLesim-Android-UI` Actions artifact 保存。不得称这些截图证明真实读卡/切换已通过。
-- 1.1.0 构建/发布已确认；截图见 [UI 验证记录](docs/releases/1.1.0-ui-checks.md)。真实配置列表、中文真机布局、覆盖安装、读卡与双向切换待用户验证。后续按反馈更新本文件与维护记录。
+- 1.1.0 构建/发布已确认；截图见 [UI 验证记录](docs/releases/1.1.0-ui-checks.md)。用户已反馈本版可切换、未感受到问题；没有逐项记录的中文布局、覆盖安装、下载和断连测试仍不能补写通过。后续按反馈更新本文件与维护记录。
+
+## 9. 2026-11-06 代码审查交接
+
+- [详细审查](docs/reviews/2026-11-06-code-review.md)含源码定位、8 项隔离复现及依赖公告匹配；本轮仅记录，**未修复、未构建新 APK**。
+- 优先处理下载 TLS trust-all 和详情页停用保护绕过；APK 三签与 HTTPS 服务证书互不替代，安全修复不应改变原包名/三签。
+- 刷新/重连、下载成功反馈、敏感日志、通知结果、自动昵称迁移和写操作重试问题有不同证据等级，实施前阅读详细触发条件。
+- 用户当前反馈是“实测可切换，没感受到问题”，只按此范围登记，不宣称所有设备/异常场景已测试。
