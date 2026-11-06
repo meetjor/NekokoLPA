@@ -151,7 +151,6 @@ class Ccid(
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun sendCcidPcToRdrMessage(message: ByteArray) {
-        Log.d("CCID PC TO RDR", message.toHexString())
         val transmitted = usbDeviceConnection.bulkTransfer(bulkOut, message, message.size, 4000)
         if (transmitted != message.size) {
             throw CcidException("Failed to transmit data ($transmitted / ${message.size})")

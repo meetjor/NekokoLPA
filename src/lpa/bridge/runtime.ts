@@ -1,5 +1,4 @@
 import {Adapter, LpaArg} from '@/lpa/adapters/Adapter';
-import {Adapters} from '@/lpa/adapters/registry';
 import {CustomHttp} from '@/lpa/bridge/nativeModules';
 import {CLA_PROPRIETARY, LpaDispatcher, channelClaHex} from '@/lpa/core';
 
@@ -20,7 +19,7 @@ export type LpaExecutor = (command: string, args: LpaArg[]) => Promise<any>;
  * commands. `Adapter.execute` calls `setupDevice` on every command, so these
  * are cached rather than rebuilt each time.
  */
-const dispatchers: {[deviceId: string]: LpaDispatcher} = {};
+const dispatchers = new WeakMap<Adapter, LpaDispatcher>();
 
 /**
  * Builds (or reuses) the LPA for `adapter`'s device and installs the resulting
@@ -30,20 +29,20 @@ const dispatchers: {[deviceId: string]: LpaDispatcher} = {};
  * connect, so the LPA itself only speaks ES10 over STORE DATA / GET RESPONSE.
  */
 export async function setupDevice(adapter: Adapter): Promise<LpaExecutor> {
-  const deviceId = adapter.device.deviceId;
-  let dispatcher = dispatchers[deviceId];
+  let dispatcher = dispatchers.get(adapter);
 
   if (!dispatcher) {
     dispatcher = new LpaDispatcher({
       transmit: async (apdu: string) => {
         try {
+          if (adapter.obsolete) throw new Error('Device disconnected');
           // Rewrite the class byte to target this device's logical channel.
           const channel = parseInt(adapter.device.channel ?? '1', 16);
           return await adapter.device.transmit(
             channelClaHex(channel, CLA_PROPRIETARY) + apdu.substring(2),
           );
         } catch (error) {
-          console.error(`[${adapter.device.deviceName}] APDU transmit failed`, error);
+          console.warn('[LPA] APDU transport failed');
           return SW_TRANSMIT_FAILED;
         }
       },
@@ -52,18 +51,18 @@ export async function setupDevice(adapter: Adapter): Promise<LpaExecutor> {
         try {
           return await CustomHttp.sendHttpRequest(url, body);
         } catch (error) {
-          console.error('[LPA] SM-DP+ request failed', error);
+          console.warn('[LPA] HTTPS request failed');
           throw error;
         }
       },
 
       onProgress: (message: string, progress: number, total: number) => {
-        Adapters[deviceId]?.callback({message, progress, total});
+        if (!adapter.obsolete) adapter.callback({message, progress, total});
       },
 
       maxSegment: adapter.device.type === 'ble_9el' ? NINE_ESIM_APDU_MTU : undefined,
     });
-    dispatchers[deviceId] = dispatcher;
+    dispatchers.set(adapter, dispatcher);
   }
 
   // The channel is renegotiated on every reconnect.

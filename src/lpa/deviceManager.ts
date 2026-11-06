@@ -10,7 +10,7 @@ import {EstkMeRed2} from '@/lpa/adapters/EstkMeRed2Device';
 import {BeeSimDevice} from '@/lpa/adapters/BeeSimDevice';
 import {SimLinkDevice} from '@/lpa/adapters/SimLinkDevice';
 import {CCIDPlugin, OMAPIBridge} from '@/lpa/bridge/nativeModules';
-import {setInternalDevices, setTargetDevice} from '@/store/slices';
+import {setInternalDevices, setTargetDevice, removeDeviceState} from '@/store/slices';
 import {getAIDList} from '@/shared/utils/aid';
 
 /** Shape of one entry in OMAPIBridge.listDevices' JSON payload. */
@@ -72,8 +72,7 @@ async function discoverCcidDevices(): Promise<Device[]> {
         new CcidDevice(reader, Platform.OS === 'ios' || readers.length > 1 ? reader : 'USB'),
     );
   } catch (error) {
-    console.error('[LPA] Failed to list CCID readers', error);
-    return [];
+    throw new Error('Failed to list CCID readers');
   }
 }
 
@@ -98,10 +97,11 @@ function discoverBluetoothDevices(): Device[] {
  *
  * @param targetDevice device id the UI should switch to once it appears.
  */
-export async function setupDevices(
+async function reconcileDevices(
   dispatch: Dispatch,
   targetDevice: string | null = null,
 ): Promise<void> {
+  if (Object.values(Adapters).some(a => a.isLocked)) throw new Error('Device operation in progress');
   const devices: Device[] = [
     ...(await discoverOmapiDevices()),
     ...(await discoverCcidDevices()),
@@ -114,20 +114,36 @@ export async function setupDevices(
   for (const deviceId of Object.keys(Adapters)) {
     if (!liveIds.has(deviceId)) {
       try {
-        await Adapters[deviceId].device.disconnect();
+        await Adapters[deviceId].dispose();
       } catch {
         // The device is already gone; nothing to clean up.
       }
       delete Adapters[deviceId];
+      dispatch(removeDeviceState(deviceId));
     }
   }
 
+  let failed = false;
   for (const device of devices) {
     const existing = Adapters[device.deviceId];
-    if (existing) {
-      await existing.device.refresh();
-    } else {
-      await new Adapter(device, dispatch).initialize();
+    const adapter = existing ?? new Adapter(device, dispatch);
+    // Preserve transport/session identity while updating current discovery data.
+    adapter.device.available = device.available;
+    adapter.device.slotAvailable = device.slotAvailable;
+    adapter.device.description = device.description;
+    adapter.device.signatures = device.signatures;
+    adapter.setState({available: device.available});
+    if (!device.available) {
+      await adapter.disconnect();
+      adapter.setState({refreshError: true});
+      continue;
+    }
+    try {
+      if (existing) await adapter.refresh();
+      else await adapter.initialize();
+    } catch {
+      adapter.setState({refreshError: true});
+      failed = true;
     }
   }
 
@@ -135,4 +151,16 @@ export async function setupDevices(
   if (targetDevice) {
     dispatch(setTargetDevice(targetDevice));
   }
+  if (failed) throw new Error('Some devices could not be refreshed');
+}
+
+// Serialize discoveries: native enumeration also touches logical channels.
+let discovery: Promise<void> = Promise.resolve();
+export function setupDevices(dispatch: Dispatch, targetDevice: string | null = null): Promise<void> {
+  const next = discovery.then(() => reconcileDevices(dispatch, targetDevice)).catch(error => {
+    dispatch(setInternalDevices(Object.keys(Adapters)));
+    throw error;
+  });
+  discovery = next.catch(() => {});
+  return next;
 }

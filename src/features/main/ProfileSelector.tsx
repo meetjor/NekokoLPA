@@ -4,11 +4,12 @@ import {Plus} from '@tamagui/lucide-icons';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import ProfileCardHeader from './ProfileCardHeader';
+import {reportOperationError} from '@/shared/utils/loading';
 import {radius} from '@/shared/theme/tokens';
 import {useSelector} from 'react-redux';
 import {Profile} from '@/lpa/types/profile';
 import {RefreshControl} from 'react-native-gesture-handler';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {Adapters} from '@/lpa/adapters/registry';
 import {selectDeviceState} from '@/store';
 import {ProfileRow} from '@/features/main/ProfileRow';
@@ -21,7 +22,7 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
   const {t} = useTranslation('main');
   const DeviceState = useSelector(selectDeviceState(deviceId));
   const [refreshing, setRefreshing] = useState(false);
-  const {setLoading, isLoading} = useLoading();
+  const {isLoading} = useLoading();
   const adapter = Adapters[deviceId];
 
   const profiles = useMemo(() => {
@@ -34,36 +35,12 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
     }));
   }, [DeviceState.profiles]);
 
-  // Automatically remove legacy sorting suffixes (e.g., " ^abc")
-  useEffect(() => {
-    const toCleanup = profiles.filter(p =>
-      /\s?\^[a-z]{3}$/i.test(
-        p.profileNickname || p.profileName || (p as any).serviceProviderName || '',
-      ),
-    );
-
-    if (toCleanup.length > 0) {
-      (async () => {
-        setLoading(true);
-        try {
-          for (const p of toCleanup) {
-            const current =
-              p.profileNickname || p.profileName || (p as any).serviceProviderName || '';
-            const cleaned = current.replace(/\s?\^[a-z]{3}$/i, '').trim();
-            if (p.iccid) await adapter.setNicknameByIccId(p.iccid, cleaned);
-          }
-          await adapter.refresh();
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [profiles, adapter, setLoading]);
-
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await adapter.refresh();
+    } catch {
+      reportOperationError();
     } finally {
       setRefreshing(false);
     }
@@ -89,7 +66,7 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
             DeviceState.switchSyncing === true && DeviceState.switchTargetIccid === item.iccid
           }
           syncError={
-            DeviceState.switchSyncError === true && DeviceState.switchTargetIccid === item.iccid
+            DeviceState.refreshError === true || (DeviceState.switchSyncError === true && DeviceState.switchTargetIccid === item.iccid)
           }
         />
       </TView>
@@ -99,6 +76,7 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
       deviceId,
       DeviceState.switchSyncing,
       DeviceState.switchSyncError,
+      DeviceState.refreshError,
       DeviceState.switchTargetIccid,
     ],
   );
@@ -114,6 +92,7 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
       ListHeaderComponent={
         <>
           <ProfileCardHeader deviceId={deviceId} />
+          {DeviceState.refreshError && <Text color="$statusWarning" marginBottom={12}>{t('ui_refresh_failed')}</Text>}
           <XStack alignItems="center" justifyContent="space-between" gap={8} marginBottom={12}>
             <Text color="$textDefault" fontSize={18} fontWeight="600" flex={1}>
               {t('ui_installed_profiles', {count: profiles.length})}

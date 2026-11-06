@@ -6,6 +6,7 @@
  * argument order and JSON result shapes so no screen had to change.
  */
 
+import type {NotificationResult} from '../types/operations';
 import { Lpa, DownloadSession, Transmit, Http, ProgressCallback } from './lpa';
 import { RemoteError, RemoteErrorException } from './errors';
 import { NotificationMetadata, ProfileMetadata } from './models';
@@ -68,7 +69,7 @@ export class LpaDispatcher {
    * Send every pending notification whose operation matches `mask`, optionally
    * removing it afterwards. `iccid` empty means "all profiles".
    */
-  private async processNotifications(iccid: string, mask: number, remove: boolean): Promise<void> {
+  private async processNotifications(iccid: string, mask: number, remove: boolean): Promise<NotificationResult> {
     const all = await this.lpa.listNotifications();
     const wanted = all
       .filter(
@@ -77,20 +78,25 @@ export class LpaDispatcher {
       )
       // SGP.22 §3.5: notifications are delivered in sequence-number order
       .sort((a: NotificationMetadata, b: NotificationMetadata) => a.seqNumber - b.seqNumber);
+    const result: NotificationResult = {result: 0, total: wanted.length, sent: 0, failed: 0, removed: 0, retained: wanted.length};
     for (const meta of wanted) {
       try {
         const pending = await this.lpa.retrieveNotification(meta.seqNumber);
-        if (!pending) {
-          continue;
-        }
+        if (!pending) throw new Error('Notification unavailable');
         await this.lpa.sendNotification(pending);
+        result.sent++;
         if (remove) {
           await this.lpa.removeNotification(meta.seqNumber);
+          result.removed++;
+          result.retained--;
         }
       } catch (e) {
-        // a server that refuses one notification must not block the others
+        // Includes cleanup failures: delivered but retained is not full success.
+        result.failed++;
       }
     }
+    result.result = result.failed ? -1 : 0;
+    return result;
   }
 
   async execute(fn: string, args: any[]): Promise<any> {
@@ -158,8 +164,7 @@ export class LpaDispatcher {
       }
 
       case 'process_notifications': {
-        await this.processNotifications(String(args[0] || ''), Number(args[1]), Number(args[2]) === 1);
-        return { result: 0 };
+        return this.processNotifications(String(args[0] || ''), Number(args[1]), Number(args[2]) === 1);
       }
 
       case 'authenticate_profile': {

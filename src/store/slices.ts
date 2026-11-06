@@ -6,6 +6,8 @@ import {EuiccConfiguredAddresses, EuiccInfo2, Notification} from '@/lpa/types/eu
 /** Everything we know about a single eUICC, keyed by device id. */
 export interface DeviceState {
   available?: boolean;
+  /** Last refresh failed: retained profiles are not current card confirmation. */
+  refreshError?: boolean;
   eid?: string;
   bytesFree?: number;
   version?: string;
@@ -61,6 +63,7 @@ export const deviceStateSlice = createSlice({
   name: 'deviceState',
   initialState: deviceStateInitialState,
   reducers: {
+    removeDeviceState: (state, action: PayloadAction<string>) => { delete state[action.payload]; },
     /** Shallow-merges a partial update into one device's state. */
     setDeviceState: (state, action: PayloadAction<[value: DeviceState, deviceId: string]>) => {
       const [value, deviceId] = action.payload;
@@ -70,4 +73,4 @@ export const deviceStateSlice = createSlice({
 });
 
 export const {setInternalDevices, setTargetDevice} = deviceListSlice.actions;
-export const {setDeviceState} = deviceStateSlice.actions;
+export const {setDeviceState, removeDeviceState} = deviceStateSlice.actions;

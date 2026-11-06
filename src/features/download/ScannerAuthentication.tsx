@@ -118,6 +118,7 @@ export function ScannerAuthentication({
               as the thing the user came here to do. */}
           <YStack gap={14} marginTop={4}>
             <TouchableOpacity
+              disabled={loading}
               onPress={() => {
                 makeLoading(setLoading, async () => {
                   const downloadResult = await adapter.downloadProfile(
@@ -125,7 +126,14 @@ export function ScannerAuthentication({
                     confirmationCode,
                     setProgress,
                   );
-                  await adapter.processNotifications(authenticateResult.profile.iccid);
+                  if (downloadResult.success) {
+                    try {
+                      const notifications = await adapter.processNotifications(authenticateResult.profile.iccid);
+                      downloadResult.notificationWarning = notifications.failed > 0 || notifications.refreshWarning;
+                    } catch {
+                      downloadResult.notificationWarning = true;
+                    }
+                  }
                   confirmDownload({downloadResult});
                 });
               }}
@@ -144,6 +152,7 @@ export function ScannerAuthentication({
             </TouchableOpacity>
 
             <TouchableOpacity
+              disabled={loading}
               onPress={() => {
                 makeLoading(setLoading, async () => {
                   await adapter.cancelSession(authenticateResult._internal);

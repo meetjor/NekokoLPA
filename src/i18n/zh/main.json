@@ -173,5 +173,14 @@
   "ui_device_identity": "设备标识",
   "ui_device_storage": "可用空间",
   "ui_device_technical": "技术信息",
-  "ui_no_notifications": "暂无待处理通知"
+  "ui_no_notifications": "暂无待处理通知",
+  "ui_disable_protected_title": "停用保护",
+  "ui_disable_protected": "当前保护设置不允许直接停用手机内的配置。要切换号码，请启用目标配置。高级设置可关闭此保护。",
+  "ui_operation_error_title": "操作未完成或结果未确认",
+  "ui_operation_error": "请检查连接并刷新卡上状态后再决定是否重试。命令可能已经执行，勿重复下载或删除。",
+  "ui_install_followup_warning": "配置已安装成功，但状态刷新或运营商通知尚未完成。请重试同步，无须再次下载。",
+  "ui_retry_sync": "重试同步",
+  "ui_sync_done": "同步完成",
+  "ui_refresh_failed": "刷新失败，以下为上次读取的数据，当前卡上状态未确认。",
+  "ui_notification_result": "已发送 {{sent}} 条；失败 {{failed}} 条；卡上保留 {{retained}} 条。"
 }

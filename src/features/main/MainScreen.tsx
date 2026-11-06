@@ -1,3 +1,5 @@
+import {makeLoading} from '@/shared/utils/loading';
+import {useLoading} from '@/app/providers/LoadingProvider';
 import React, {useCallback} from 'react';
 import {useDispatch} from 'react-redux';
 import {YStack} from 'tamagui';
@@ -10,13 +12,8 @@ import ActionButtons from '@/features/main/components/ActionButtons';
 
 function Main({navigation}: RootScreenProps<'Main'>) {
   const dispatch = useDispatch();
-  const handleRefresh = useCallback(async () => {
-    try {
-      await setupDevices(dispatch);
-    } catch (error) {
-      console.warn('[QianLesim] Manual refresh failed', error);
-    }
-  }, [dispatch]);
+  const {setLoading} = useLoading();
+  const handleRefresh = useCallback(() => makeLoading(setLoading, () => setupDevices(dispatch)), [dispatch, setLoading]);
   return (
     <SafeScreen>
       <YStack

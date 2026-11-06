@@ -7,7 +7,7 @@ import {Bluetooth} from '@tamagui/lucide-icons';
 import SlotTabs from '@/features/main/components/SlotTabs';
 import BluetoothSheet from '@/features/bluetooth/BluetoothSheet';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {preferences} from '@/shared/storage';
+import {usePreference} from '@/shared/hooks/usePreference';
 
 import {useAppDispatch, useAppSelector, selectDeviceList} from '@/store';
 import {setTargetDevice} from '@/store/slices';
@@ -21,16 +21,16 @@ export default function SIMSelector() {
   const {deviceList: allDevices, targetDevice} = useAppSelector(selectDeviceList);
   const dispatch = useAppDispatch();
   const {t} = useTranslation(['main']);
-  const showSlots = preferences.getString('showSlots');
+  const showSlots = usePreference('showSlots', 'all');
 
-  let deviceList = allDevices;
+  let deviceList = allDevices.filter(id => !!Adapters[id]);
 
   if (showSlots === 'possible') {
-    deviceList = allDevices.filter(
+    deviceList = deviceList.filter(
       x => Adapters[x].device.available || Adapters[x].device.slotAvailable,
     );
   } else if (showSlots === 'available') {
-    deviceList = allDevices.filter(x => Adapters[x].device.available);
+    deviceList = deviceList.filter(x => Adapters[x].device.available);
   }
 
   const firstAvailable = deviceList.map(x => Adapters[x].device.available).indexOf(true);
@@ -42,7 +42,7 @@ export default function SIMSelector() {
   const adapter = selected ? Adapters[selected] : null;
 
   useEffect(() => {
-    if (!currentTab && deviceList.length > 0) {
+    if ((!currentTab || !deviceList.includes(currentTab)) && deviceList.length > 0) {
       const firstAvailable = deviceList.map(x => Adapters[x].device.available).indexOf(true);
       setCurrentTab(firstAvailable < 0 ? deviceList[0] : deviceList[firstAvailable]);
     }

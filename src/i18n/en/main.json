@@ -244,5 +244,14 @@
   "ui_device_identity": "Identity",
   "ui_device_storage": "Available memory",
   "ui_device_technical": "Technical information",
-  "ui_no_notifications": "No pending notifications"
+  "ui_no_notifications": "No pending notifications",
+  "ui_disable_protected_title": "Disable protection",
+  "ui_disable_protected": "Directly disabling an on-device profile is protected. Enable the target profile to switch lines. Advanced settings can turn this protection off.",
+  "ui_operation_error_title": "Operation incomplete or unconfirmed",
+  "ui_operation_error": "Check the connection and refresh the card state before retrying. The command may already have applied; do not repeat a download or deletion without checking.",
+  "ui_install_followup_warning": "The profile was installed, but refresh or operator notification is pending. Retry synchronization; do not download again.",
+  "ui_retry_sync": "Retry synchronization",
+  "ui_sync_done": "Synchronized",
+  "ui_refresh_failed": "Refresh failed. Showing the last read data; current card state is unconfirmed.",
+  "ui_notification_result": "Sent {{sent}}; failed {{failed}}; retained on card {{retained}}."
 }

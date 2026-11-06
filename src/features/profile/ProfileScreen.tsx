@@ -1,3 +1,5 @@
+import {usePreference} from '@/shared/hooks/usePreference';
+import {isRedactMode, maskIccid, maskProfileText} from '@/shared/utils/redact';
 import React, {useCallback, useEffect, useState} from 'react';
 import {Alert, Image, Platform, ToastAndroid, TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
@@ -11,6 +13,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {parseMetadata, Tag} from '@/shared/utils/parser';
 import {resolveMccMnc, T_PLMN} from '@/data/mccMncResolver';
 import {Flags} from '@/assets/flags';
+import {toggleProfile} from '@/shared/utils/profileActions';
 import {makeLoading} from '@/shared/utils/loading';
 import {Adapters} from '@/lpa/adapters/registry';
 import {selectDeviceState} from '@/store';
@@ -26,9 +29,11 @@ function MetadataRow({
   theme,
   flag,
   onCopy,
+  displayValue,
 }: {
   label: string;
   value?: string;
+  displayValue?: string;
   theme: any;
   flag?: any;
   onCopy?: (value: string) => void;
@@ -48,7 +53,7 @@ function MetadataRow({
               flex={1}
               numberOfLines={1}
               style={{textAlign: 'right'}}>
-              {value || '[empty]'}
+              {displayValue ?? value ?? '[empty]'}
             </TText>
             {flag && <Image style={{width: 18, height: 18}} source={flag} />}
             {value && <Copy size={12} color={theme.color6?.val} />}
@@ -62,6 +67,8 @@ function MetadataRow({
 function Profile({route, navigation}: RootScreenProps<'Profile'>) {
   const theme = useTheme();
   const {t} = useTranslation(['main']);
+  const storedRedact = usePreference('redactMode', 'none');
+  const redactMode = isRedactMode(storedRedact) ? storedRedact : 'none';
   const {deviceId, iccid} = route.params;
 
   const adapter = Adapters[deviceId];
@@ -80,14 +87,14 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
 
   /** profileState 1 is the enabled profile; only one can be enabled at a time. */
   const isEnabled = metadata?.profileState === 1;
+  const stateLabel = DeviceState.refreshError || DeviceState.switchSyncError
+    ? t('main:ui_sync_unknown')
+    : DeviceState.switchSyncing ? t('main:ui_sync_pending')
+    : t(isEnabled ? 'main:profile_state_enabled' : 'main:profile_state_disabled');
 
   const handleToggleEnabled = useCallback(() => {
     makeLoading(setLoading, async () => {
-      if (isEnabled) {
-        await adapter.disableProfileByIccId(iccid);
-      } else {
-        await adapter.enableProfileByIccId(iccid);
-      }
+      await toggleProfile(adapter, iccid, isEnabled);
     });
   }, [isEnabled, adapter, iccid, setLoading]);
 
@@ -158,7 +165,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
         <YStack gap={12}>
           <Input
             placeholder={t('main:profile_rename_profile')}
-            value={nickname}
+            value={maskProfileText(nickname, redactMode)}
             onChangeText={c => setNickname(c)}
             borderWidth={1}
             borderRadius={radius.sm}
@@ -212,7 +219,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                   letterSpacing={tracking.title}
                   numberOfLines={1}
                   adjustsFontSizeToFit>
-                  {nickname}
+                  {maskProfileText(nickname, redactMode)}
                 </TText>
               </TouchableOpacity>
             </XStack>
@@ -222,10 +229,10 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                 width={8}
                 height={8}
                 borderRadius={radius.pill}
-                backgroundColor={isEnabled ? '$backgroundSuccessHeavy' : '$color9'}
+                backgroundColor={DeviceState.refreshError || DeviceState.switchSyncing || DeviceState.switchSyncError ? '$statusWarning' : isEnabled ? '$backgroundSuccessHeavy' : '$color9'}
               />
               <TText color="$color6" fontSize={fontSize.md}>
-                {isEnabled ? t('main:profile_state_enabled') : t('main:profile_state_disabled')}
+                {stateLabel}
               </TText>
             </XStack>
           </YStack>
@@ -239,6 +246,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                 paddingVertical: 13,
                 alignItems: 'center',
               }}
+              disabled={isLoading}
               onPress={handleToggleEnabled}>
               <TText
                 color={isEnabled ? '$textDefault' : theme.onFilled?.val}
@@ -315,7 +323,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                       borderRadius={radius.pill}
                       gap={6}>
                       <TText color={tag.color} fontSize={fontSize.md} fontWeight="500">
-                        {tag.value}
+                        {maskProfileText(tag.value, redactMode)}
                       </TText>
                       <X size={10} color={tag.color} />
                     </XStack>
@@ -361,6 +369,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                   <MetadataRow
                     label={t('main:profile_iccid')}
                     value={metadata.iccid}
+                    displayValue={maskIccid(metadata.iccid, redactMode)}
                     theme={theme}
                     onCopy={handleCopy}
                   />
@@ -369,6 +378,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                   <MetadataRow
                     label={t('main:profile_name')}
                     value={metadata.profileName}
+                    displayValue={maskProfileText(metadata.profileName, redactMode)}
                     theme={theme}
                     onCopy={handleCopy}
                   />
@@ -377,6 +387,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
                   <MetadataRow
                     label={t('main:profile_provider')}
                     value={metadata.serviceProviderName}
+                    displayValue={maskProfileText(metadata.serviceProviderName, redactMode)}
                     theme={theme}
                     onCopy={handleCopy}
                   />
@@ -432,11 +443,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
             )}
             <MetadataRow
               label={t('main:profile_state')}
-              value={
-                isEnabled
-                  ? t('main:profile_state_enabled')
-                  : t('main:profile_state_disabled')
-              }
+              value={stateLabel}
               theme={theme}
               onCopy={handleCopy}
             />

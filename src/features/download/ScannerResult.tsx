@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity, View} from 'react-native';
 import {Button as TButton, Text as TText, XStack, YStack, useTheme, Card} from 'tamagui';
@@ -13,6 +13,7 @@ import {fontSize, iconSize, radius, tracking} from '@/shared/theme/tokens';
 import SectionLabel from '@/shared/ui/SectionLabel';
 
 export function ScannerResult({authenticateResult, downloadResult, deviceId, goBack}: any) {
+  const [followupDone, setFollowupDone] = useState(false);
   const {t} = useTranslation(['main']);
   const theme = useTheme();
   const {setLoading} = useLoading();
@@ -44,6 +45,19 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
             </TText>
           </YStack>
 
+          {(downloadResult.refreshWarning || downloadResult.notificationWarning) && (
+            <YStack gap={8}>
+              <TText color="$statusWarning">{t('main:ui_install_followup_warning')}</TText>
+              <TButton onPress={() => makeLoading(setLoading, async () => {
+                await adapter.refresh();
+                const result = await adapter.processNotifications(authenticateResult.profile.iccid);
+                if (result.failed || result.refreshWarning) throw new Error('Notifications pending');
+                setFollowupDone(true);
+              })} disabled={followupDone}>
+                {t(followupDone ? 'main:ui_sync_done' : 'main:ui_retry_sync')}
+              </TButton>
+            </YStack>
+          )}
           <YStack gap={8}>
             <YStack paddingLeft={4}>
               <SectionLabel>{t('main:profile_information')}</SectionLabel>
@@ -138,7 +152,6 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
             backgroundColor="$backgroundDangerHeavy"
             onPress={() => {
               makeLoading(setLoading, async () => {
-                await adapter.getProfiles();
                 goBack();
               });
             }}>

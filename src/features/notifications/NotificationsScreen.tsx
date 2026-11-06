@@ -17,8 +17,8 @@ import {useLoading} from '@/app/providers/LoadingProvider';
 import {makeLoading} from '@/shared/utils/loading';
 import {fontFamily, fontSize, radius} from '@/shared/theme/tokens';
 import Pill from '@/shared/ui/Pill';
-import {preferences} from '@/shared/storage';
-import {group, isRedactMode, maskIccid} from '@/shared/utils/redact';
+import {usePreference} from '@/shared/hooks/usePreference';
+import {group, isRedactMode, maskIccid, maskProfileText} from '@/shared/utils/redact';
 
 /** GSMA profile-management operation bit flags, as reported by the card. */
 const OPERATION_LABELS: Record<number, string> = {
@@ -40,14 +40,10 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
   const adapter = Adapters[deviceId];
 
   useEffect(() => {
-    setLoading(true);
-    adapter
-      .getNotifications()
-      .catch(error => console.error('[LPA] Failed to load notifications', error))
-      .finally(() => setLoading(false));
+    void makeLoading(setLoading, () => adapter.getNotifications());
   }, [adapter, setLoading]);
 
-  const stored = preferences.getString('redactMode');
+  const stored = usePreference('redactMode', 'none');
   const redactMode = isRedactMode(stored) ? stored : 'none';
 
   const renderRow = (row: Notification) => {
@@ -67,7 +63,7 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
             {
               text: t('main:notifications_delete_ok'),
               style: 'destructive',
-              onPress: async () => {
+              onPress: () => makeLoading(setLoading, async () => {
                 const result = await adapter.sendNotification(row.seqNumber);
                 if (result.result === 0) {
                   await adapter.deleteNotification(row.seqNumber);
@@ -77,7 +73,7 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
                     t('main:notifications_send_failed_alert'),
                   );
                 }
-              },
+              }),
             },
           ])
         }
@@ -94,7 +90,7 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
 
     const renderRight = () => (
       <TouchableOpacity
-        onPress={async () => {
+        onPress={() => makeLoading(setLoading, async () => {
           const result = await adapter.sendNotification(row.seqNumber);
           if (result.result !== 0) {
             Alert.alert(
@@ -105,7 +101,7 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
           } else {
             showToast(t('main:notifications_send_success'), 'success');
           }
-        }}
+        })}
         activeOpacity={0.8}
         style={{
           width: 60,
@@ -145,7 +141,7 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
                       fontSize={fontSize.lg}
                       fontWeight={'600' as any}
                       flexShrink={1}>
-                      {metadata ? name : group(maskIccid(row.iccid, redactMode))}
+                      {metadata ? maskProfileText(name, redactMode) : group(maskIccid(row.iccid, redactMode))}
                     </Text>
                   </XStack>
                   <Text
@@ -169,8 +165,12 @@ function Notifications({route}: RootScreenProps<'Notifications'>) {
   const handleProcessAllNotifications = () => {
     makeLoading(setLoading, async () => {
       showToast(t('main:notifications_processing_all'), 'success');
-      await adapter.processNotifications('');
-      showToast(t('main:notifications_processing_all_success'), 'success');
+      const result = await adapter.processNotifications('');
+      showToast(
+        t('main:ui_notification_result', {sent: result.sent, failed: result.failed, retained: result.retained}),
+        result.failed || result.refreshWarning ? 'error' : 'success',
+      );
+      if (result.refreshWarning) throw new Error('Notification refresh failed');
     });
   };
 

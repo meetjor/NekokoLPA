@@ -1,11 +1,11 @@
 import {parseMetadata} from '@/shared/utils/parser';
 import {findPhoneNumbersInText} from 'libphonenumber-js/min';
-import {preferences} from '@/shared/storage';
+import {toggleProfile} from '@/shared/utils/profileActions';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import {Text, useTheme, XStack, YStack} from 'tamagui';
 // useTheme covers dynamic color; no need for useColorScheme here
 import {Pencil, Trash2, Smartphone} from '@tamagui/lucide-icons';
-import {Alert, Image, Pressable, ToastAndroid, TouchableOpacity} from 'react-native';
+import {Alert, Image, Pressable, TouchableOpacity} from 'react-native';
 import {makeLoading} from '@/shared/utils/loading';
 import {Flags} from '@/assets/flags';
 import React, {useCallback, useMemo} from 'react';
@@ -18,7 +18,7 @@ import {useLoading} from '@/app/providers/LoadingProvider';
 import {isSimplifiedMode} from '@/shared/config/features';
 import {fontSize, radius} from '@/shared/theme/tokens';
 import Toggle from '@/shared/ui/Toggle';
-import {group, isRedactMode, maskIccid, maskText, RedactMode} from '@/shared/utils/redact';
+import {group, isRedactMode, maskIccid, maskText, maskProfileText, RedactMode} from '@/shared/utils/redact';
 import {usePreference} from '@/shared/hooks/usePreference';
 import {profileIconUri} from '@/shared/utils/profileIcon';
 import {useOperatorIcon} from '@/shared/hooks/useOperatorIcon';
@@ -37,7 +37,7 @@ const ProfileTags = React.memo(({tags, stealthMode}: {tags: any[]; stealthMode: 
         borderRadius={radius.xs}
         backgroundColor={t.backgroundColor}>
         <Text fontSize={fontSize.xs} fontWeight={'500' as any} color={t.color}>
-          {stealthMode === 'none' ? t.value : stealthMode === 'medium' ? t.value : '***'}
+          {stealthMode === 'none' ? t.value : stealthMode === 'medium' ? maskProfileText(t.value, 'medium') : '***'}
         </Text>
       </XStack>
     ))}
@@ -77,7 +77,7 @@ const ProfileSubtitle = React.memo(
 
     return (
       <Text color="$color6" numberOfLines={1} fontSize={fontSize.sm}>
-        {subtitleText}
+        {maskProfileText(subtitleText, stealthMode)}
       </Text>
     );
   },
@@ -178,31 +178,15 @@ const ProfileRowComponent = ({
   }, [t, setLoading, adapter, profile.iccid]);
 
   const handleSwitchChange = useCallback(async () => {
-    const isOMAPI = adapter.device.type === 'omapi';
-    const protectionEnabled = isSimplified || preferences.getString('disableProtection') !== 'off';
-
-    makeLoading(setLoading, async () => {
-      if (profile.selected) {
-        if (!isOMAPI || !protectionEnabled) {
-          await adapter.disableProfileByIccId(profile.iccid);
-        } else {
-          ToastAndroid.show(
-            `Disabling Profile on Android may have unintended effects.`,
-            ToastAndroid.SHORT,
-          );
-        }
-      } else {
-        await adapter.enableProfileByIccId(profile.iccid);
-      }
-    });
-  }, [profile.selected, adapter, profile.iccid, setLoading, isSimplified]);
+    await makeLoading(setLoading, () => toggleProfile(adapter, profile.iccid, profile.selected));
+  }, [profile.selected, adapter, profile.iccid, setLoading]);
 
   const displayName = useMemo(() => {
     const name_ =
       stealthMode === 'none' || stealthMode === 'medium'
         ? replacedName
         : profile?.serviceProviderName;
-    return maskText(name_, stealthMode);
+    return maskProfileText(maskText(name_, stealthMode), stealthMode);
   }, [stealthMode, replacedName, profile?.serviceProviderName]);
 
   const renderRightActions = useCallback(() => {
@@ -349,13 +333,4 @@ const ProfileRowComponent = ({
   );
 };
 
-export const ProfileRow = React.memo(
-  ProfileRowComponent,
-  (prevProps, nextProps) =>
-    prevProps.syncing === nextProps.syncing &&
-    prevProps.syncError === nextProps.syncError &&
-    prevProps.profile.iccid === nextProps.profile.iccid &&
-    prevProps.profile.profileState === nextProps.profile.profileState &&
-    prevProps.profile.profileNickname === nextProps.profile.profileNickname &&
-    prevProps.deviceId === nextProps.deviceId,
-);
+export const ProfileRow = React.memo(ProfileRowComponent);

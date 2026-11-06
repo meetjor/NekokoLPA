@@ -1,5 +1,7 @@
 import {Text} from 'tamagui';
 import {View} from 'react-native';
+import {usePreference} from '@/shared/hooks/usePreference';
+import {isRedactMode, maskIccid, maskProfileText} from '@/shared/utils/redact';
 import React, {useEffect, useState} from 'react';
 import {ProfileMetadataMap} from '@/lpa/types/profile';
 import {Image, StyleSheet, ToastAndroid, TouchableOpacity} from 'react-native';
@@ -10,6 +12,8 @@ import {Flags} from '@/assets/flags';
 
 export default function MetadataView({metadata}: {metadata?: ProfileMetadataMap}) {
   const {t} = useTranslation(['main']);
+  const storedRedact = usePreference('redactMode', 'none');
+  const redactMode = isRedactMode(storedRedact) ? storedRedact : 'none';
 
   const [resolvedMccMnc, setResolvedMccMnc] = useState<T_PLMN | undefined>();
   useEffect(() => {
@@ -19,7 +23,7 @@ export default function MetadataView({metadata}: {metadata?: ProfileMetadataMap}
   }, [metadata, metadata?.profileNickname]);
 
   if (!metadata) return null;
-  const readableMccMnc = metadata.profileOwnerMccMnc.replaceAll('F', ' ');
+  const readableMccMnc = (metadata.profileOwnerMccMnc ?? '').replaceAll('F', ' ');
 
   return (
     <View style={{alignItems: 'flex-start', flex: 1, gap: 10}}>
@@ -35,7 +39,7 @@ export default function MetadataView({metadata}: {metadata?: ProfileMetadataMap}
             }
           }}>
           <Text color="$textDefault" style={{flexGrow: 1}}>
-            {metadata.profileName}
+            {maskProfileText(metadata.profileName, redactMode)}
           </Text>
         </TouchableOpacity>
       </View>
@@ -51,7 +55,7 @@ export default function MetadataView({metadata}: {metadata?: ProfileMetadataMap}
             }
           }}>
           <Text color="$textDefault" style={{flexGrow: 1}}>
-            {metadata.serviceProviderName}
+            {maskProfileText(metadata.serviceProviderName, redactMode)}
           </Text>
         </TouchableOpacity>
       </View>
@@ -144,7 +148,7 @@ export default function MetadataView({metadata}: {metadata?: ProfileMetadataMap}
             }
           }}>
           <Text color="$textDefault" style={{flexGrow: 1}}>
-            {metadata.iccid}
+            {maskIccid(metadata.iccid, redactMode)}
           </Text>
         </TouchableOpacity>
       </View>

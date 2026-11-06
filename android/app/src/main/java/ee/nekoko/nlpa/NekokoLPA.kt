@@ -36,21 +36,9 @@ import im.nfc.ccid.CcidCardNotFoundException
 import im.nfc.ccid.LevelOfExchange
 import im.nfc.ccid.Protocol
 import kotlin.collections.get
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 // OMAPIBridge constants
 val commonStkNames: Array<String> = arrayOf(
@@ -264,12 +252,10 @@ class NekokoLPA(reactContext: ReactApplicationContext) : NativeNekokoLPASpec(rea
                     resp = chan.transmit(getEid)
                 }
 
-                Log.i(TAG, "Transmit Response: ${resp.toHex()}")
                 val hex = resp.toHex()
                 // Expect a BF3E TLV wrapping the 16-byte EID.
                 if (resp.isNotEmpty() && resp[0] == 0xbf.toByte() && hex.length >= EID_HEX_END) {
                     val eid = hex.substring(EID_HEX_START, EID_HEX_END)
-                    Log.i(TAG, "EID: $eid")
                     result.add(
                         mapOf(
                             "name" to reader.name,
@@ -367,88 +353,25 @@ class NekokoLPA(reactContext: ReactApplicationContext) : NativeNekokoLPASpec(rea
 
     override fun transceiveOMAPI(device: String, apdu: String, promise: Promise) {
         Thread {
-            var chan = channelMappings[device]
-            if (chan == null) {
-                Log.e(TAG, "Restarting channel $device")
-                if (connectChannel(device)) {
+            try {
+                var chan = channelMappings[device]
+                if (chan == null || chan.isClosed) {
+                    if (!connectChannel(device)) throw IOException("Channel unavailable")
                     chan = channelMappings[device]
                 }
-            }
-            if (chan == null) {
-                promise.reject("NO_SUCH_CHANNEL", "No such channel")
-            } else {
-                try {
-                    val resp = chan.transmit(hexStringToByteArray(apdu))
-                    val respHex = resp.toHex()
-                    if (respHex == "6881") {
-                        Log.e(TAG, "Channel is actually closed.")
-                        throw IOException()
-                    }
-                    if (respHex == "6d00") {
-                        Log.e(TAG, "Received 6d00 error, disconnecting and reconnecting channel $device")
-                        // Close the channel and remove it
-                        try {
-                            chan.close()
-                        } catch (e: Exception) {
-                            Log.d(TAG, "Error closing channel: ${e.message}")
-                        }
-                        channelMappings.remove(device)
-                        // Reconnect and retry
-                        for (i in 1..5) {
-                            Log.e(TAG, "Reconnecting Channel after 6d00, count $i")
-                            val result = connectChannel(device)
-                            if (result) {
-                                chan = channelMappings[device]
-                                if (chan != null) {
-                                    try {
-                                        val retryResp = chan.transmit(hexStringToByteArray(apdu))
-                                        promise.resolve(retryResp.toHex())
-                                        return@Thread
-                                    } catch (e: IllegalStateException) {
-                                        Thread.sleep((500 * i).toLong())
-                                    } catch (e: IOException) {
-                                        Thread.sleep((500 * i).toLong())
-                                    }
-                                }
-                            } else {
-                                Thread.sleep((500 * i).toLong())
-                            }
-                        }
-                        Log.e(TAG, "Failed to reconnect after 6d00 error")
-                        promise.reject("TRANSMIT_ERROR", "Failed to reconnect after 6d00 error")
-                        return@Thread
-                    }
-                    promise.resolve(respHex)
-                } catch (e: Exception) {
-                    when (e) {
-                        is IllegalStateException, is IOException -> {
-                            for (i in 1..5) {
-                                Log.e(TAG, "Restarting Channel, count $i")
-                                val result = connectChannel(device)
-                                if (result) {
-                                    try {
-                                        chan = channelMappings[device]
-                                        val resp = chan!!.transmit(hexStringToByteArray(apdu))
-                                        promise.resolve(resp.toHex())
-                                        return@Thread
-                                    } catch (e: IllegalStateException) {
-                                        Thread.sleep((500 * i).toLong())
-                                    } catch (e: IOException) {
-                                        Thread.sleep((500 * i).toLong())
-                                    }
-                                } else {
-                                    Thread.sleep((500 * i).toLong())
-                                }
-                            }
-                            Log.e(TAG, "Exception: $e", e)
-                            promise.reject("TRANSMIT_ERROR", "Error message", e)
-                        }
-                        else -> {
-                            Log.e(TAG, "Exception: $e", e)
-                            promise.reject("TRANSMIT_ERROR", "Error message", e)
-                        }
-                    }
-                }
+                val response = chan?.transmit(hexStringToByteArray(apdu))
+                    ?: throw IOException("Channel unavailable")
+                val hex = response.toHex()
+                if (hex == "6881" || hex == "6d00") throw IOException("Channel reset")
+                promise.resolve(hex)
+            } catch (e: Exception) {
+                // The card may have applied a write before losing its response.
+                // Invalidate the channel; the NEXT command reconnects. Only the
+                // Adapter's read-only command allowlist may retry a transaction.
+                val stale = channelMappings.remove(device)
+                try { stale?.close() } catch (_: Exception) { }
+                Log.w(TAG, "APDU response unavailable; channel invalidated")
+                promise.reject("TRANSMIT_ERROR", "Card response unavailable; operation outcome unconfirmed")
             }
         }.start()
     }
@@ -720,39 +643,14 @@ class NekokoLPA(reactContext: ReactApplicationContext) : NativeNekokoLPASpec(rea
     // ==================== CustomHttp Methods ====================
 
     override fun sendHttpRequest(url: String, body: String, promise: Promise) {
-        Log.d(TAG, "Use Custom HTTP: Server URL: $url")
-
-        val request = Request.Builder()
-            .url(url)
-            .post(body.toRequestBody(JSON_MEDIA_TYPE))
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Accept", "application/json")
-            .addHeader("User-Agent", "gsma-rsp-lpad")
-            .addHeader("X-Admin-Protocol", "gsma/rsp/v2.2.0")
-            .build()
-
-        httpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "SM-DP+ request failed", e)
-                promise.reject("0", e.toString())
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                response.use {
-                    if (!response.isSuccessful) {
-                        promise.reject(response.code.toString(), response.toString())
-                    } else {
-                        promise.resolve(response.body?.string())
-                    }
-                }
-            }
-        })
+        RspHttpClient.send(url, body,
+            { response -> promise.resolve(response) },
+            { code, message -> promise.reject(code, message) })
     }
 
     companion object {
         private val TAG: String = NekokoLPA::class.java.name
 
-        private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
 
         /** GET DATA for the EID (BF3E / 5C015A), per SGP.22. */
         private const val APDU_GET_EID = "81E2910006BF3E035C015A"
@@ -761,50 +659,7 @@ class NekokoLPA(reactContext: ReactApplicationContext) : NativeNekokoLPASpec(rea
         private const val EID_HEX_START = 10
         private const val EID_HEX_END = EID_HEX_START + 32
 
-        /**
-         * Accepts every TLS certificate and any hostname. This is deliberate.
-         *
-         * SM-DP+ servers present certificates chained to GSMA CI roots, and some
-         * cards are provisioned against non-GSMA CIs. None of those roots are in
-         * the Android system trust store, so ordinary trust evaluation rejects
-         * every SM-DP+ host and no profile can be downloaded.
-         *
-         * This is not as exposed as it looks: SGP.22 mutual authentication runs
-         * underneath, so the Bound Profile Package is signed and encrypted end to
-         * end and cannot be forged or read by an intermediary. What TLS is left
-         * protecting here is the surrounding metadata — activation codes,
-         * matching IDs, confirmation codes, ICCIDs and EIDs — plus resistance to
-         * a peer redirecting or stalling the session.
-         *
-         * The correct fix is pinning rather than system trust: build the
-         * X509TrustManager from a KeyStore holding the CI roots we support, so an
-         * unknown CI still fails closed. Hostname verification may need to stay
-         * relaxed if SM-DP+ certificates lack matching SANs. Mirrors the same
-         * decision in ios/CustomHttp.swift.
-         */
-        private val trustAllCertificates = arrayOf<TrustManager>(
-            object : X509TrustManager {
-                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-            }
-        )
 
-        /**
-         * Shared client. Previously one was built per request, so every profile
-         * download allocated its own connection pool and dispatcher threads.
-         */
-        private val httpClient: OkHttpClient by lazy {
-            val sslContext = SSLContext.getInstance("TLS")
-            sslContext.init(null, trustAllCertificates, SecureRandom())
-            OkHttpClient.Builder()
-                .sslSocketFactory(
-                    sslContext.socketFactory,
-                    trustAllCertificates[0] as X509TrustManager
-                )
-                .hostnameVerifier { _, _ -> true }
-                .build()
-        }
     }
 
     private data class CCIDReader(

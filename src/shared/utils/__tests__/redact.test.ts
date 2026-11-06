@@ -76,3 +76,13 @@ describe('isRedactMode', () => {
     expect(isRedactMode(undefined)).toBe(false);
   });
 });
+
+describe('free-text subscriber privacy', () => {
+  const {maskProfileText} = require('../redact');
+  it('masks phone-like numbers in names and tags without hiding operator names', () => {
+    expect(maskProfileText('giffgaff +44 7700 900123', 'medium')).toBe('giffgaff +•• •••• ••••••');
+    expect(maskProfileText('Telna', 'medium')).toBe('Telna');
+    expect(maskProfileText('secret', 'block')).toBe('██████');
+    expect(maskProfileText('line 12345678', 'none')).toBe('line 12345678');
+  });
+});

@@ -20,14 +20,37 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+      - name: Resolve version and reject existing release tag
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          CODE="$(node -p "require('./package.json').buildVersion")"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$CODE" =~ ^[1-9][0-9]*$ ]]
+          TAG="v${VERSION}-qianlesim-3sign"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/tags?per_page=100" --jq '.[].name' > /tmp/existing-tags
+          if grep -Fxq "$TAG" /tmp/existing-tags; then
+            echo "Release tag already exists: $TAG. Increment version before building."
+            exit 1
+          fi
+          test -f "docs/releases/${VERSION}.md"
+          printf 'version=%s\ntag=%s\n' "$VERSION" "$TAG" >> "$GITHUB_OUTPUT"
+          printf 'VERSION=%s\n' "$VERSION" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -52,6 +75,7 @@ jobs:
             android/app/build/intermediates/cxx
           key: ${{ runner.os }}-native-qianlesim-v2-${{ hashFiles('yarn.lock', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
+            ${{ runner.os }}-native-qianlesim-v2-
             ${{ runner.os }}-native-arm64-v1-
       - name: Configure Android SDK
         run: |
@@ -69,6 +93,15 @@ jobs:
       - name: Assemble arm64 APK
         working-directory: android
         run: bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
+      - name: Android HTTPS security tests
+        working-directory: android
+        run: bash gradlew testReleaseUnitTest --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: QianLesim-Native-Tests
+          path: android/app/build/test-results/testReleaseUnitTest/
+          if-no-files-found: warn
       - name: Apply public three-signer signature
         shell: bash
         run: |
@@ -76,7 +109,9 @@ jobs:
           mkdir -p dist
           APK="$(find android/app/build/outputs/apk/release -type f -name '*arm64*.apk' -print -quit)"
           test -n "$APK"
-          OUTPUT="$PWD/dist/QianLesim-v1.1.0-arm64.apk"
+          unzip -p "$APK" rsp/gsma-ci.pem | openssl x509 -noout -fingerprint -sha256 | grep -qi '5E:3E:91:FD:45:43:27:C3:AF:5D:32:A7:A7:3B:BC:59:FE:43:AA:7D:85:FD:32:D5:DB:44:42:3F:80:A5:6B:B3'
+          unzip -p "$APK" rsp/gd-smdp.pem | openssl x509 -noout -fingerprint -sha256 | grep -qi '2C:E2:D6:78:7F:3B:64:11:B8:9E:67:5E:7E:B3:E8:7F:88:17:9B:F5:B0:8A:6E:C7:8D:95:A6:16:77:00:C7:8B'
+          OUTPUT="$PWD/dist/QianLesim-v${VERSION}-arm64.apk"
           sed -n '/^java -jar apksigner.jar sign/,/--next-signer --ks signer\/keys\/9esim.jks/p' variants/multisign/signing.sh > dist/sign-three.sh
           printf '  --out "%s" "%s"\n' "$OUTPUT" "$APK" >> dist/sign-three.sh
           bash dist/sign-three.sh
@@ -89,12 +124,12 @@ jobs:
             6966004ad0161165335f9204f8f5a52df49fe068c9545c0c589c23221af8d3a4; do
             grep -q "certificate SHA-256 digest: $fingerprint" dist/signing.txt
           done
-          (cd dist && sha256sum QianLesim-v1.1.0-arm64.apk > SHA256SUMS.txt)
+          (cd dist && sha256sum QianLesim-v${VERSION}-arm64.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: QianLesim-3sign
           path: |
-            dist/QianLesim-v1.1.0-arm64.apk
+            dist/QianLesim-v${{ env.VERSION }}-arm64.apk
             dist/signing.txt
             dist/SHA256SUMS.txt
           if-no-files-found: error
@@ -125,14 +160,28 @@ jobs:
           path: dist/ui/
           if-no-files-found: warn
           retention-days: 14
-      - name: Publish release
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: QianLesim-3sign
+          path: dist
+      - name: Publish verified release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          gh release create v1.1.0-qianlesim-3sign \
-            dist/QianLesim-v1.1.0-arm64.apk dist/SHA256SUMS.txt dist/signing.txt \
+          (cd dist && sha256sum --check SHA256SUMS.txt)
+          gh release create "$TAG" \
+            "dist/QianLesim-v${VERSION}-arm64.apk" dist/SHA256SUMS.txt dist/signing.txt \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title 'QianLesim v1.1.0 - Minimal UI (three-signer)' \
-            --notes-file docs/releases/1.1.0.md \
+            --title "QianLesim v${VERSION} - Reliability and security (three-signer)" \
+            --notes-file "docs/releases/${VERSION}.md" \
             --prerelease

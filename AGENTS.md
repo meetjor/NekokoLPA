@@ -17,7 +17,7 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.0 / versionCode 405，已完成 CI 并发布预发布 APK；用户已反馈本版真机可切换、未感受到问题（2026-11-06） |
+| 当前源码版本 | QianLesim 1.1.1 / versionCode 406，安全与异常恢复改进，待本次 CI；上个已发布版本 1.1.0 用户真机可切换 |
 | 已发布 APK 的源码基线 | `c7d7f5989b06578711380bdd75134169282db81b`；后续文档提交不等于新 APK |
 | 构建 | [Actions 42056466890](https://github.com/meetjor/NekokoLPA/actions/runs/42056466890) 成功，含 TypeScript、111 项测试、ARM64 编译、三签指纹校验、Android 模拟器页面检查和发布 |
 | 签名验证 | 1.1.0 CI 日志确认 APK v2 有效，签名者数量为 3，且全部指纹匹配既有集合 |
@@ -81,7 +81,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - **上面的 Gradle 产物不是最终三证书发布包。** 必须继续执行工作流的 `Apply public three-signer signature` 步骤：从 `variants/multisign/signing.sh` 提取至 9eSIM 的三签部分再签名。不要以 `variants/store/signing.sh` 或完整 multisign 脚本替代已验证的三签方案。
 - 以 `java -jar apksigner.jar verify --verbose --print-certs <APK>` 校验最终包；除校验成功和签名者数量为 3，还需比对[维护记录中的三枚证书 SHA-256](docs/QianLesim-maintenance.md)。不要只凭“有三个签名”判断集合正确。
 - 每次新应用发布同步递增 `package.json` 的 `version` 与 `buildVersion`，检查 Gradle 映射，并更新工作流的 APK 文件名、标签、标题、说明及 README 下载地址。
-- **当前发布工作流硬编码 1.1.0 标签；运行前先查询其是否已存在。** 推送会触发发布的源码修改前，先安排新版本，避免编译成功后发布失败；不要覆盖或删除旧 Release 来规避版本管理。
+- **发布工作流从 package.json 派生版本并在编译前拒绝已存在标签。** 推送会触发发布的源码修改前，先安排新版本，避免编译成功后发布失败；不要覆盖或删除旧 Release 来规避版本管理。
 - 当前 push 过滤包含 src、android、store 资源、package.json、yarn.lock、截图脚本和该工作流，限 `feature/qianlesim-v1`。单改交接文档不应重新编译。
 - 构建后核实实际 SHA、Actions 结论、最终签名、Release 资产及浏览器直达下载链接；在最终回复中分别报告源码检查、构建、签名、真机测试状态。
 - 真机回归应覆盖安装、读卡、双向切换、无需下拉刷新显示正确状态、Loading 结束；未执行的项目明确列出，不自行填写通过。
@@ -121,3 +121,12 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 优先处理下载 TLS trust-all 和详情页停用保护绕过；APK 三签与 HTTPS 服务证书互不替代，安全修复不应改变原包名/三签。
 - 刷新/重连、下载成功反馈、敏感日志、通知结果、自动昵称迁移和写操作重试问题有不同证据等级，实施前阅读详细触发条件。
 - 用户当前反馈是“实测可切换，没感受到问题”，只按此范围登记，不宣称所有设备/异常场景已测试。
+
+## 10. 1.1.1 实施交接（2026-11-06）
+
+- 用户已授权开始下一版，并撤回“暂不构建”限制，继续正常自动构建/发布。
+- [本版变更与回归清单](docs/releases/1.1.1.md)、[Android HTTPS 信任范围](docs/security/rsp-tls.md)。A1–A10 的源码改进与回归测试已实施；真实硬件异常和下载兼容尚未验证。
+- 保留既有正常切换核实流程；底层不再重放结果未知的写 APDU，只读命令可完整重试一次。此变动需要真机复测 SIM REFRESH。
+- Android TLS 限制为系统可信根和两枚来源可核验的生产 RSP 根，不信任任意私有/测试 CI；G+D 根于 2027-05-10 到期，须提前复核。不要擅自关闭验证。
+- 新增原生 HTTPS 故障测试，CI 构建权限改为只读、发布独立 job。最新 Actions/Release 尚待本次提交后核实，不能把此前 1.1.0 成功记录套用到 1.1.1。
+- 依赖公告的全量治理与 iOS 网络安全仍未完成；本版没有声称“全部漏洞清零”。

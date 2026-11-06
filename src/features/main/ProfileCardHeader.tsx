@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Platform, ToastAndroid, TouchableOpacity} from 'react-native';
+import {Alert, Platform, ToastAndroid, TouchableOpacity} from 'react-native';
 import {useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -55,7 +55,11 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
       label: t('notifications_send'),
       Icon: Send,
       action: () => {
-        makeLoading(setLoading, () => adapter.processNotifications(''));
+        makeLoading(setLoading, async () => {
+          const result = await adapter.processNotifications('');
+          Alert.alert(t('manage_notifications'), t('ui_notification_result', {...result}));
+          if (result.refreshWarning) throw new Error('Notification refresh failed');
+        });
       },
     },
     ...(Platform.OS === 'android' && deviceId.startsWith('omapi:')

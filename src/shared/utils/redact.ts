@@ -85,3 +85,12 @@ export function maskText(text: string | undefined, mode: RedactMode): string {
 export function group(value: string, size = 4): string {
   return value.replace(new RegExp(`(.{${size}})`, 'g'), '$1 ').trim();
 }
+
+/** Names/tags can contain subscriber phone numbers even outside ICCID fields. */
+export function maskProfileText(text: string | undefined, mode: RedactMode): string {
+  const value = String(text ?? '');
+  if (mode === 'none') return value;
+  if (mode === 'block') return maskText(value, mode);
+  // Mask number-like runs without interpreting local phone numbering rules.
+  return value.replace(/\+?\d[\d ()-]{5,}\d/g, match => match.replace(/\d/g, DOT));
+}

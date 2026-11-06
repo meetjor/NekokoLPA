@@ -1,6 +1,7 @@
 import {Dispatch} from '@reduxjs/toolkit';
 
 import {Adapters} from '@/lpa/adapters/registry';
+import type {DownloadResult, NotificationResult} from '@/lpa/types/operations';
 import {setupDevice} from '@/lpa/bridge/runtime';
 import {setDeviceState} from '@/store/slices';
 import type {DeviceState} from '@/store/slices';
@@ -69,7 +70,7 @@ export class Adapter {
   private switchGeneration = 0;
 
   setState = (state: DeviceState) => {
-    this.dispatch(setDeviceState([state, this.deviceId]));
+    if (!this.obsolete) this.dispatch(setDeviceState([state, this.deviceId]));
   };
 
   /** Progress sink, replaced per-operation by download/authenticate calls. */
@@ -100,6 +101,8 @@ export class Adapter {
   }
 
   async connect(): Promise<boolean> {
+    if (this.obsolete) return false;
+    if (this.connected) return true;
     try {
       if (!this.connected && (await this.device.connect())) {
         this.connected = true;
@@ -121,22 +124,37 @@ export class Adapter {
       return true;
     } catch {
       return false;
+    } finally {
+      this.connected = false;
     }
   }
 
+  async dispose(): Promise<void> {
+    this.obsolete = true;
+    this.switchGeneration++;
+    this.callback = () => {};
+    await this.disconnect();
+  }
+
   async initialize(): Promise<void> {
-    if (await this.connect()) {
-      await this.getEuiccInfo();
-      await this.getProfiles();
-    }
+    if (!(await this.connect())) throw new Error('Device connection failed');
+    await this.getEuiccInfo();
+    await this.getProfiles();
   }
 
   async refresh(): Promise<void> {
     try {
       await this.getEuiccInfo();
       await this.getProfiles();
-    } catch {
-      await this.initialize();
+    } catch (error) {
+      if (this.isLocked || this.obsolete) throw error;
+      try {
+        if (!(await this.reconnect())) throw new Error('Device connection failed');
+        await this.initialize();
+      } catch (recoveryError) {
+        this.setState({refreshError: true});
+        throw recoveryError;
+      }
     }
   }
 
@@ -147,12 +165,12 @@ export class Adapter {
   /**
    * Runs a single LPA command against the device.
    *
-   * Only one command may be in flight at a time: the underlying APDU channel is
-   * stateful, so interleaving two commands corrupts both. If the first attempt
-   * fails we re-initialise the LPA once and retry, which recovers from
-   * a dropped BLE/CCID link.
+   * Only one command may be in flight at a time. Retry a complete read-only
+   * transaction once after reconnect; never replay a state-changing command
+   * when the card may already have accepted it.
    */
   async execute(command: string, args: LpaArg[]): Promise<any> {
+    if (this.obsolete) throw new Error('Device disconnected');
     if (this.isLocked) {
       throw new Error(`Device ${this.deviceId} is busy; cannot run "${command}" concurrently`);
     }
@@ -161,14 +179,13 @@ export class Adapter {
       try {
         return await this._execute(command, args);
       } catch (error) {
-        if (command === 'enable_profile' || command === 'disable_profile') {
+        if (!['get_eid', 'get_euicc_info', 'get_profiles', 'get_notifications'].includes(command)) {
           // SIM REFRESH can sever OMAPI after the eUICC accepted a switch.
           // Replaying this command can fail even when the first one worked.
           throw error;
         }
-        return await (
-          await setupDevice(this)
-        )(command, args);
+        if (this.obsolete || !(await this.reconnect())) throw error;
+        return await (await setupDevice(this))(command, args);
       }
     } finally {
       // Must run even when the retry throws, otherwise the device stays
@@ -205,11 +222,11 @@ export class Adapter {
       if (publish) {
         this.switchGeneration++;
         this.profiles = profiles;
-        this.setState({profiles, switchSyncing: false, switchSyncError: false, switchTargetIccid: undefined});
+        this.setState({profiles, refreshError: false, switchSyncing: false, switchSyncError: false, switchTargetIccid: undefined});
       }
       return profiles;
     }
-    return [];
+    throw new Error('Invalid profile response');
   }
 
   async getNotifications(): Promise<Notification[]> {
@@ -265,7 +282,7 @@ export class Adapter {
       return;
     }
 
-    const isCurrent = () => generation === this.switchGeneration;
+    const isCurrent = () => !this.obsolete && generation === this.switchGeneration;
     const matches = (profiles: ProfileMetadataMap[]) =>
       profiles.some(
         profile =>
@@ -280,7 +297,7 @@ export class Adapter {
       try {
         await this.getEuiccInfo();
       } catch (error) {
-        console.warn('[QianLesim] eUICC info re-read failed', error);
+        console.warn('[QianLesim] eUICC info re-read failed');
       }
       try {
         const fresh = await this.getProfiles(false);
@@ -295,7 +312,7 @@ export class Adapter {
           return true;
         }
       } catch (error) {
-        console.warn('[QianLesim] Profile status verification failed', error);
+        console.warn('[QianLesim] Profile status verification failed');
       }
       return false;
     };
@@ -327,7 +344,7 @@ export class Adapter {
           this.setState({profiles: actual});
         }
       } catch (error) {
-        console.warn('[QianLesim] Final switch reconciliation read failed', error);
+        console.warn('[QianLesim] Final switch reconciliation read failed');
       }
       if (isCurrent()) this.setState({switchSyncing: false, switchSyncError: true});
     };
@@ -340,13 +357,14 @@ export class Adapter {
    * Do not blindly retry a possibly already accepted switch command.
    */
   private async changeProfileByIccId(iccid: string, enabled: boolean): Promise<void> {
+    if (this.obsolete || this.isLocked) throw new Error('Device unavailable or busy');
     const generation = this.showExpectedState({iccid, enabled});
     const refreshFlag = this.device.type === 'omapi' ? '1' : '0';
     const command = enabled ? 'enable_profile' : 'disable_profile';
     try {
       await this.execute(command, [iccid, refreshFlag]);
     } catch (error) {
-      console.warn('[QianLesim] Switch outcome uncertain, verifying hardware state', error);
+      console.warn('[QianLesim] Switch outcome uncertain, verifying hardware state');
     }
     await this.reloadAfterChange(
       enabled ? 'standard' : 'disable',
@@ -398,12 +416,17 @@ export class Adapter {
     internalState: string,
     confirmationCode: string,
     callback: (update: ProgressUpdate) => void,
-  ): Promise<any> {
+  ): Promise<DownloadResult> {
     this.callback = callback;
-    const result = await this.execute('download_profile', [internalState, confirmationCode]);
-    if (result?.success) {
-      await this.getProfiles();
-      await this.getEuiccInfo();
+    const result: DownloadResult = await this.execute('download_profile', [internalState, confirmationCode]);
+    if (result.success) {
+      try {
+        await this.getProfiles();
+        await this.getEuiccInfo();
+      } catch {
+        this.setState({refreshError: true});
+        return {...result, refreshWarning: true};
+      }
     }
     return result;
   }
@@ -414,11 +437,16 @@ export class Adapter {
    * Delete notifications are sent but kept on the card (flag 0); install/enable/
    * disable notifications are sent and then removed (flag 1).
    */
-  async processNotifications(iccid: string): Promise<void> {
+  async processNotifications(iccid: string): Promise<NotificationResult> {
     const DELETE = 0x10;
     const INSTALL_ENABLE_DISABLE = 0x20 | 0x40 | 0x80;
-    await this.execute('process_notifications', [iccid, DELETE, 0]);
-    await this.execute('process_notifications', [iccid, INSTALL_ENABLE_DISABLE, 1]);
-    await this.getNotifications();
+    const a: NotificationResult = await this.execute('process_notifications', [iccid, DELETE, 0]);
+    const b: NotificationResult = await this.execute('process_notifications', [iccid, INSTALL_ENABLE_DISABLE, 1]);
+    const result: NotificationResult = {
+      result: a.result || b.result, total: a.total + b.total, sent: a.sent + b.sent,
+      failed: a.failed + b.failed, removed: a.removed + b.removed, retained: a.retained + b.retained,
+    };
+    try { await this.getNotifications(); } catch { result.refreshWarning = true; }
+    return result;
   }
 }
