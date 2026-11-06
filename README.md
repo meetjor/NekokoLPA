@@ -2,9 +2,9 @@
 
 基于 [iebb/NekokoLPA](https://github.com/iebb/NekokoLPA) 的个人定制 eSIM 管理应用。保留开源项目许可，不是官方 NekokoLPA 版本。
 
-## 1.1.3 状态栏兼容（构建待核实）
+## 1.1.3 状态栏兼容与通知修复
 
-包含 1.1.2 的全部修复，补旧版 Android 浅色状态栏和通知按钮可读性，新增 Android 14 / 15 模拟器检查。详见 [1.1.3 更新说明](docs/releases/1.1.3.md)。
+包含 1.1.2 的全部修复，补旧版 Android 浅色状态栏和通知按钮可读性，Android 14 / 15 模拟器检查已通过，现已发布预发布测试版。详见 [1.1.3 更新说明](docs/releases/1.1.3.md)。
 
 ## 1.1.2 通知页与异常恢复
 
@@ -23,10 +23,12 @@
 
 ## 下载
 
-- **[QianLesim 1.1.2 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.2-qianlesim-3sign/QianLesim-v1.1.2-arm64.apk)**
-- [1.1.2 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.2-qianlesim-3sign) · [构建、测试与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42210999769)
+- **[QianLesim 1.1.3 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.3-qianlesim-3sign/QianLesim-v1.1.3-arm64.apk)**
+- [1.1.3 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.3-qianlesim-3sign) · [构建、测试与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42213389165) · [Android 14/15 截图与验证边界](docs/releases/1.1.3-ui-checks.md)
 
-1.1.2 已通过 TypeScript、162 项 Jest、9 项 Android 原生 HTTPS 测试、ARM64 构建、三枚签名指纹比对及 Android 15 合成通知页面检查。下载产物已独立验签，与 Release 的 SHA-256 一致。请直接覆盖安装，再验证读卡和双向切换；无须卸载或删除 eSIM。真实运营商下载、外部读卡器和异常断连仍待测试。
+1.1.3 / 408 已通过 TypeScript、162 项 Jest、9 项 Android 原生 HTTPS 测试、ARM64 构建、三枚签名指纹比对，以及 Android 14/15 深浅色、长通知与放大字体检查。下载产物已独立验签，与 Release 的 SHA-256 一致。APK 为 61,799,513 字节，SHA-256：`716d4e6834fcdf233558c8990a5a3c273c58e734f64d67d6f9a5f9a2c8e19e1f`。
+
+请直接覆盖安装，检查通知页与浅色状态栏，再验证读卡和双向切换；无须卸载或删除 eSIM。**本版尚未获得真机反馈**，真实运营商下载、USB/BLE 读卡器和异常断连仍待测试。
 
 旧版本与历史验证：
 

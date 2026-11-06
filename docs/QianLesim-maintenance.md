@@ -109,3 +109,12 @@
 - ARM64 APK 61,783,129 字节，SHA-256 `6255fb548f0ba7dbf78ef64aced347238c56fb0674dde0b6e83c9522ac492da7`，独立验签确认 v2 / 三证书指纹与既有集合完全相同；Release API 资产哈希、大小、目标源码一致，正式 bundle 无 `QL_UI_FIXTURE_ONLY`。
 - 1.1.2 合成通知截图已人工核对，无红绿底层穿透、标题/ICCID/按钮重叠；失败通知仍保留。真实设备未测。
 - 对用户浅色截图状态栏继续追踪：RN 0.88 自动 edge-to-edge 限 Android 15+；较旧系统仍可能是黑底，而 SafeScreen 已切深色图标。1.1.3 / 408 使用 RN Gradle 支持的 edgeToEdgeEnabled，保留 SafeAreaInsets；CI 加 Android 14 同包检查。不是更改签名或硬件路径。
+
+## 2026-11-07 · 1.1.3 最终核验（北京时间）
+
+- [Actions 42213389165](https://github.com/meetjor/NekokoLPA/actions/runs/42213389165) 构建和发布成功，源码 `3dcb622ab1d032efcd9be8a6231d93116c479711`；[Release](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.3-qianlesim-3sign) 为预发布。
+- TypeScript、21 套件共 162 Jest、9 项原生 HTTPS 测试、ARM64、Android 14/15 全套页面检查通过。原生报告 0 failure / error / skipped。
+- 下载产物独立验签成功，APK v2 和三枚 SHA-256 指纹与既有 Sakura/Community/9eSIM 集合一致。实际 manifest 是 1.1.3 / 408，包名 `ee.nekoko.nlpa1`。
+- APK 61,799,513 字节，SHA-256 `716d4e6834fcdf233558c8990a5a3c273c58e734f64d67d6f9a5f9a2c8e19e1f`，与 Release API 的目标提交、大小和哈希一致。正式 bundle 无 `QL_UI_FIXTURE_ONLY`。
+- [UI 截图与详细边界](releases/1.1.3-ui-checks.md)：深浅色、长名称与大字体布局通过；Android 14 浅色状态栏不再黑底深字；全部投递失败时显示失败且保留通知。
+- 七项用户指定问题的源码复核/补漏和通知显示修复完成。当前待办为用户真机回归，不能以模拟器/构建代替真机读卡、切换或运营商下载反馈；依赖治理与 iOS 不属于本轮。

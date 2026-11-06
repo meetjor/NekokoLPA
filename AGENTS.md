@@ -2,7 +2,7 @@
 
 本文件是本仓库的开发入口，适用于 Work、Codex 及后续开发者。以实际源码、Git 历史、Actions、Release 和用户最新反馈恢复状态，不依赖聊天记忆，也不要从零重建项目。
 
-最后更新：2026-11-06。当前维护分支：`feature/qianlesim-v1`。
+最后更新：2026-11-07。当前维护分支：`feature/qianlesim-v1`。
 
 ## 1. 每次接管先做什么
 
@@ -17,15 +17,15 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.3 / versionCode 408，补旧版 Android 状态栏；1.1.2 已通过构建、验签和通知 UI 检查并发布 |
-| 已发布 APK 的源码基线 | `696398a53a0b928aff9a9d06765c9616e9bddb1a`；后续文档提交不等于新 APK |
-| 构建 | [Actions 42176030819](https://github.com/meetjor/NekokoLPA/actions/runs/42176030819) 构建/发布成功，含 TypeScript、147 项 Jest、9 项原生 HTTPS 测试、ARM64 编译、三签指纹校验及模拟器页面检查 |
-| 签名验证 | 1.1.1 CI 与下载产物独立验签均确认 APK v2 有效，3 枚证书指纹匹配既有集合；Release 资产哈希与本地一致 |
-| 发布 | [v1.1.1-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.1-qianlesim-3sign)，预发布；1.1.1 尚无真机反馈，不沿用 1.1.0 的反馈作为本版验收 |
+| 当前源码版本 | QianLesim 1.1.3 / versionCode 408，七项问题复核、通知显示与旧版 Android 状态栏修复已发布 |
+| 已发布 APK 的源码基线 | `3dcb622ab1d032efcd9be8a6231d93116c479711`；后续文档提交不等于新 APK |
+| 构建 | [Actions 42213389165](https://github.com/meetjor/NekokoLPA/actions/runs/42213389165) 构建/发布成功，TypeScript、162 项 Jest、9 项原生 HTTPS、ARM64、三签及 Android 14/15 页面检查通过 |
+| 签名验证 | 1.1.3 CI 与下载产物独立验签均确认 APK v2 有效，3 枚证书指纹匹配既有集合；Release 资产大小、SHA-256 与本地一致 |
+| 发布 | [v1.1.3-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.3-qianlesim-3sign)，预发布；1.1.3 尚无真机反馈，不沿用 1.1.0 的反馈作为本版验收 |
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
-| 已知未解决 Bug | 用户报告通知页底色穿透、重叠及中文缺失；1.1.2 已修复源码并复核七项问题，待本次 CI，见[1.1.2 说明](docs/releases/1.1.2.md) |
+| 已知未解决 Bug | 用户通知页穿透、重叠、中文缺失与浅色状态栏问题已完成源码修复及模拟器验证，仍待用户真机确认；见 [1.1.3 说明与截图](docs/releases/1.1.3.md) |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | 完成 1.1.2 构建/验签/页面检查与发布，再收集手机及外接读卡器反馈；按用户澄清暂不扩大到依赖升级。 |
+| 当前下一步 | 收集覆盖安装、读卡/切换、通知显示及 USB/BLE 反馈；用户指定七项已完成源码复核和补漏，本轮不扩大到依赖升级/iOS。 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -87,7 +87,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 构建后核实实际 SHA、Actions 结论、最终签名、Release 资产及浏览器直达下载链接；在最终回复中分别报告源码检查、构建、签名、真机测试状态。
 - 真机回归应覆盖安装、读卡、双向切换、无需下拉刷新显示正确状态、Loading 结束；未执行的项目明确列出，不自行填写通过。
 
-当前已发布 APK：[QianLesim-v1.1.1-arm64.apk](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.1-qianlesim-3sign/QianLesim-v1.1.1-arm64.apk)。
+当前已发布 APK：[QianLesim-v1.1.3-arm64.apk](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.3-qianlesim-3sign/QianLesim-v1.1.3-arm64.apk)。
 
 ## 6. 如何持续维护交接
 
@@ -141,10 +141,10 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 七项在 1.1.1 已有修复，本轮复核补上 USB/BLE 初始化被 available=false 跳过、同 id BLE 对象替换、手动重连状态、进度页隐私和通知结果细分等遗漏；见 [1.1.2 说明](docs/releases/1.1.2.md)。
 - 通知页改为卡片内按钮，移除透明滑动内容引起的红绿底层穿透，补完整中文和大字体布局。移除的是通知，不是配置；仍只在发送成功后移除。
 - 模拟器使用合成通知，注入仅在 ARM64 正式包已签名之后的非发布 x86_64 检查构建。不要把模拟通知当作真机截图，也不要把注入代码加入正式入口。
-- 本地 162 项 Jest / TypeScript 通过；发布结论待本次 CI 核实。真机切换/外接读卡器/下载仍需反馈。
+- 162 项 Jest / TypeScript 通过；1.1.2 与后续 1.1.3 发布均已核实成功。真机切换/外接读卡器/下载仍需反馈。
 
 ## 12. 1.1.3 收尾
 
 - Android 15 自动启用 edge-to-edge，但较旧系统默认不启用，可能造成浅色页面黑状态栏深色文字；通过 RN Gradle `edgeToEdgeEnabled=true` 统一行为，SafeScreen 继续处理安全区和图标色。
-- 通知发送按钮使用主题 btnBackground / btnForeground，CI 加入 Android 14 与 15 同 APK 页面检查。验证完成前不得声称旧系统真机问题已确认解决。
-- 1.1.2 / 407 与 1.1.3 / 408 是独立构建版本，不覆盖先前标签或 APK；最终下载与证据将在收尾更新。
+- 通知发送按钮使用主题 btnBackground / btnForeground，CI 加入 Android 14 与 15 同 APK 页面检查。Android 14/15 模拟器已通过；旧系统真机仍待反馈。
+- 1.1.2 / 407 与 1.1.3 / 408 是独立构建版本，不覆盖先前标签或 APK；最终下载与证据已更新到 README、维护记录和 [1.1.3 页面验证](docs/releases/1.1.3-ui-checks.md)。
