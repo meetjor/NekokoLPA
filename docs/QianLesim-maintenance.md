@@ -81,3 +81,17 @@
 首次 1.1.1 CI [42143287536](https://github.com/meetjor/NekokoLPA/actions/runs/42143287536) 在 Kotlin 编译中失败：OMAPI Channel 使用了不存在的 `isClosed`；已按 Android API 改为 `!isOpen`。本次没有生成或发布新 APK。补充设备移除期间页面空 adapter 保护，成功同步后移除待同步提示。HTTPS 原生测试前置到完整组装之前，并允许维护分支写入 Gradle 缓存，减少后续重复编译。
 
 第二次 CI [42175321133](https://github.com/meetjor/NekokoLPA/actions/runs/42175321133) 尚未运行测试用例，失败原因是 AGP 9 默认仅为 debug 创建单元测试任务，找不到 `testReleaseUnitTest`。已依据 [Android 官方变更说明](https://developer.android.com/build/releases/agp-9-0-0-release-notes) 显式配置 `android.onlyEnableUnitTestForTheTestedBuildType=false`，并将 CI 任务限定为 `:app:testReleaseUnitTest`。没有绕过测试或发布 APK；Gradle 缓存本次已成功保存。
+
+
+## 2026-11-06 · 1.1.1 发布核验与交接
+
+- 发布源码 `696398a53a0b928aff9a9d06765c9616e9bddb1a`，功能主提交 `b6409cada4e7617619b2d9d03bc6e2d729236d6e`；后续文档提交不改变 APK。
+- [Actions 42176030819](https://github.com/meetjor/NekokoLPA/actions/runs/42176030819) 的 build 与 publish 均成功；TypeScript、18 个 Jest 套件共 147 项测试、ARM64/x86_64 编译通过。
+- 已读取原生 HTTPS XML：9 项测试、0 失败、0 错误、0 跳过。覆盖有效证书、错误主机名、过期/不可信证书、重定向、明文/畸形 URL、截断与超大正文、生产根加载。
+- APK 内生产 RSP 根指纹经 CI 检查；最终三签产物已下载并用 apksigner 独立复核，v2=true，签名数量 3，指纹与本文既有集合逐一匹配。
+- [Release v1.1.1-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.1-qianlesim-3sign) 已发布，预发布标记保留；标签指向上述构建 SHA。APK 为 61,774,937 字节，SHA-256 `aee23bfda9ab1a0d687a4097b1b0fed5502e93e90e56b5fa5a04df5e73c4d142`，Release 资产摘要与下载文件完全一致；同时发布 SHA256SUMS.txt 与 signing.txt。
+- [浏览器直接下载 APK](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.1-qianlesim-3sign/QianLesim-v1.1.1-arm64.apk)。包名与 Sakura / Community / 9eSIM 三签不变。
+- 已查看六张无 eUICC 模拟器截图，深浅色首页/设置以及 1.3 倍字体页面正常启动、可导航；大字体英文错误提示贴近屏幕两侧，记录为后续留白/换行改进。截图与测试 artifact 的链接、保留期见 [1.1.1 说明](releases/1.1.1.md)。不将无卡截图当作真实配置列表或 OMAPI 验收。
+- **1.1.1 尚未真机测试。** 用户此前正常切换反馈属于 1.1.0。下一步按发布说明覆盖安装、读卡、双向切换并观察 Loading/状态自动确认；有正常下载需求时再验证运营商 HTTPS，不为测试删除或购买配置。USB/BLE 重连、SIM REFRESH 和跨设备兼容仍待反馈。
+- 后续独立处理剩余依赖公告与 iOS 网络安全；G+D 生产根在 2027-05-10 到期前复核。本次没有承诺兼容所有私有/测试 RSP CI，也没有宣称全部漏洞清零。
+- 本次收尾仅更新 AGENTS.md、README 与维护/发布说明，不重复编译，不覆盖已发布资产。

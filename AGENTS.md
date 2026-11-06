@@ -17,15 +17,15 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.1 / versionCode 406，安全与异常恢复改进，待本次 CI；上个已发布版本 1.1.0 用户真机可切换 |
-| 已发布 APK 的源码基线 | `c7d7f5989b06578711380bdd75134169282db81b`；后续文档提交不等于新 APK |
-| 构建 | [Actions 42056466890](https://github.com/meetjor/NekokoLPA/actions/runs/42056466890) 成功，含 TypeScript、111 项测试、ARM64 编译、三签指纹校验、Android 模拟器页面检查和发布 |
-| 签名验证 | 1.1.0 CI 日志确认 APK v2 有效，签名者数量为 3，且全部指纹匹配既有集合 |
-| 发布 | [v1.1.0-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.0-qianlesim-3sign)，标记预发布；用户已确认本版可切换，其他场景未逐项验收 |
+| 当前源码版本 | QianLesim 1.1.1 / versionCode 406，已构建并预发布；本版真机待测，1.1.0 用户真机可切换 |
+| 已发布 APK 的源码基线 | `696398a53a0b928aff9a9d06765c9616e9bddb1a`；后续文档提交不等于新 APK |
+| 构建 | [Actions 42176030819](https://github.com/meetjor/NekokoLPA/actions/runs/42176030819) 构建/发布成功，含 TypeScript、147 项 Jest、9 项原生 HTTPS 测试、ARM64 编译、三签指纹校验及模拟器页面检查 |
+| 签名验证 | 1.1.1 CI 与下载产物独立验签均确认 APK v2 有效，3 枚证书指纹匹配既有集合；Release 资产哈希与本地一致 |
+| 发布 | [v1.1.1-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.1-qianlesim-3sign)，预发布；1.1.1 尚无真机反馈，不沿用 1.1.0 的反馈作为本版验收 |
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
-| 已知未解决 Bug | 用户未报告新故障；代码审查发现 TLS 校验、停用保护入口不一致及异常恢复等问题，详见[审查记录](docs/reviews/2026-11-06-code-review.md) |
+| 已知未解决 Bug | 用户未报告新故障；[审查记录](docs/reviews/2026-11-06-code-review.md)的 A1–A10 已实施源码改进，验证范围见[1.1.1 说明](docs/releases/1.1.1.md)；大字体英文错误提示留白待改进 |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | **本版用户真机切换正常。** 下一步按审查优先级改进安全与异常路径；不要将其误记成切换 Bug 复发 |
+| 当前下一步 | 等待 1.1.1 覆盖安装、读卡、双向切换及运营商下载反馈；分批处理剩余依赖公告。1.1.0 正常切换反馈仍有效 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -51,7 +51,7 @@
 | `src/lpa/adapters/OmapiDevice.ts` | JS 侧 OMAPI 设备接口；当前 connect/reconnect 仅返回可用标记 |
 | `src/lpa/bridge/runtime.ts` | 每设备 dispatcher 缓存、传输异常和通道处理 |
 | `src/lpa/core/lpa.ts`、`dispatcher.ts` | ES10c 命令、结果码解析、命令分发 |
-| `android/app/src/main/java/ee/nekoko/nlpa/NekokoLPA.kt` | 原生通道、SIM REFRESH 后异常、APDU 重试；JS 不重试不等于原生不重试 |
+| `android/app/src/main/java/ee/nekoko/nlpa/NekokoLPA.kt`、`RspHttpClient.kt` | 原生通道、SIM REFRESH 后失效通道、单次 APDU 传输及 HTTPS 校验 |
 | `src/features/main/ProfileSelector.tsx`、`ProfileRow.tsx` | 下拉刷新、FlatList、memo、状态标记与切换按钮 |
 | `src/store/slices.ts`、`src/store/index.ts` | 设备状态合并及选择器 |
 | `.github/workflows/qianlesim-release.yml` | 缓存、校验、编译、三证书签名与发布 |
@@ -87,7 +87,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - 构建后核实实际 SHA、Actions 结论、最终签名、Release 资产及浏览器直达下载链接；在最终回复中分别报告源码检查、构建、签名、真机测试状态。
 - 真机回归应覆盖安装、读卡、双向切换、无需下拉刷新显示正确状态、Loading 结束；未执行的项目明确列出，不自行填写通过。
 
-当前已发布 APK：[QianLesim-v1.1.0-arm64.apk](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.0-qianlesim-3sign/QianLesim-v1.1.0-arm64.apk)。
+当前已发布 APK：[QianLesim-v1.1.1-arm64.apk](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.1-qianlesim-3sign/QianLesim-v1.1.1-arm64.apk)。
 
 ## 6. 如何持续维护交接
 
@@ -118,7 +118,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 
 ## 9. 2026-11-06 代码审查交接
 
-- [详细审查](docs/reviews/2026-11-06-code-review.md)含源码定位、8 项隔离复现及依赖公告匹配；本轮仅记录，**未修复、未构建新 APK**。
+- [详细审查](docs/reviews/2026-11-06-code-review.md)含源码定位、8 项隔离复现及依赖公告匹配；这是修复前的历史审查，后续 1.1.1 实施情况见下一节。
 - 优先处理下载 TLS trust-all 和详情页停用保护绕过；APK 三签与 HTTPS 服务证书互不替代，安全修复不应改变原包名/三签。
 - 刷新/重连、下载成功反馈、敏感日志、通知结果、自动昵称迁移和写操作重试问题有不同证据等级，实施前阅读详细触发条件。
 - 用户当前反馈是“实测可切换，没感受到问题”，只按此范围登记，不宣称所有设备/异常场景已测试。
@@ -129,7 +129,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - [本版变更与回归清单](docs/releases/1.1.1.md)、[Android HTTPS 信任范围](docs/security/rsp-tls.md)。A1–A10 的源码改进与回归测试已实施；真实硬件异常和下载兼容尚未验证。
 - 保留既有正常切换核实流程；底层不再重放结果未知的写 APDU，只读命令可完整重试一次。此变动需要真机复测 SIM REFRESH。
 - Android TLS 限制为系统可信根和两枚来源可核验的生产 RSP 根，不信任任意私有/测试 CI；G+D 根于 2027-05-10 到期，须提前复核。不要擅自关闭验证。
-- 新增原生 HTTPS 故障测试，CI 构建权限改为只读、发布独立 job。最新 Actions/Release 尚待本次提交后核实，不能把此前 1.1.0 成功记录套用到 1.1.1。
+- 新增原生 HTTPS 故障测试，CI 构建权限改为只读、发布独立 job。[Actions 42176030819](https://github.com/meetjor/NekokoLPA/actions/runs/42176030819) 和 1.1.1 Release 已核实成功，APK 哈希、测试与截图证据见维护记录；真机仍待反馈。
 - 依赖公告的全量治理与 iOS 网络安全仍未完成；本版没有声称“全部漏洞清零”。
 
 - AGP 9 默认只创建 debug 单测；本仓库在 gradle.properties 显式启用 release 单测，CI 使用 `:app:testReleaseUnitTest`。首次构建和测试配置失败记录见维护记录，均未发布 APK。
