@@ -74,6 +74,7 @@ yarn type-check
 yarn test src/lpa/core/__tests__ --runInBand
 bash apply_variant.sh store
 cd android
+bash gradlew :app:testReleaseUnitTest --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
 bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=arm64-v8a
 ```
 
@@ -130,3 +131,5 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - Android TLS 限制为系统可信根和两枚来源可核验的生产 RSP 根，不信任任意私有/测试 CI；G+D 根于 2027-05-10 到期，须提前复核。不要擅自关闭验证。
 - 新增原生 HTTPS 故障测试，CI 构建权限改为只读、发布独立 job。最新 Actions/Release 尚待本次提交后核实，不能把此前 1.1.0 成功记录套用到 1.1.1。
 - 依赖公告的全量治理与 iOS 网络安全仍未完成；本版没有声称“全部漏洞清零”。
+
+- AGP 9 默认只创建 debug 单测；本仓库在 gradle.properties 显式启用 release 单测，CI 使用 `:app:testReleaseUnitTest`。首次构建和测试配置失败记录见维护记录，均未发布 APK。
