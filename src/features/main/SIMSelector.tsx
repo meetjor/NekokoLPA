@@ -120,7 +120,7 @@ export default function SIMSelector() {
                 </YStack>
               ) : (
                 <ScrollView bounces alwaysBounceVertical overScrollMode="always">
-                  <YStack flex={1} paddingTop={20} gap={10}>
+                  <YStack flex={1} paddingTop={20} paddingHorizontal={20} gap={10}>
                     <TText color="$textDefault" fontSize={fontSize.xl} textAlign="center">
                       {t('main:error_device')}
                     </TText>

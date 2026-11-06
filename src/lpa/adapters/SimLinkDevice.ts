@@ -98,7 +98,7 @@ export class SimLinkDevice implements Device {
       this.description = NO_AID_FOUND;
       return false;
     } catch (error: any) {
-      console.error('[9eSIM] connect failed', error);
+      console.error('[9eSIM] connect failed');
       this.description = error?.message;
       return false;
     }

@@ -10,9 +10,7 @@ export function DeviceListener({children}: PropsWithChildren) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    setupDevices(dispatch).catch(error =>
-      console.error('[LPA] Initial device discovery failed', error),
-    );
+    setupDevices(dispatch).catch(() => console.error('[LPA] Initial device discovery failed'));
   }, [dispatch]);
 
   return <>{children}</>;

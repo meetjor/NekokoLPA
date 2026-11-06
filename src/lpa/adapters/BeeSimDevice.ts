@@ -143,7 +143,7 @@ export class BeeSimDevice implements Device {
       try {
         await this.transmitRaw(CMD_SET_POWER, POWER_TIMEOUT_MS);
       } catch (error) {
-        console.warn('[BeeSIM] TX power init was not acknowledged', error);
+        console.warn('[BeeSIM] TX power init was not acknowledged');
       }
 
       await this.transmit(APDU_TERMINAL_CAPABILITIES);
@@ -151,7 +151,7 @@ export class BeeSimDevice implements Device {
 
       const channel = openedChannel(channelResp);
       if (channel === null) {
-        console.error('[BeeSIM] unusable MANAGE CHANNEL response', channelResp);
+        console.error('[BeeSIM] unusable MANAGE CHANNEL response');
         this.description = `Failed to open channel (${channelResp})`;
         return false;
       }
@@ -165,7 +165,7 @@ export class BeeSimDevice implements Device {
       this.description = NO_AID_FOUND;
       return false;
     } catch (error: any) {
-      console.error('[BeeSIM] connect failed', error);
+      console.error('[BeeSIM] connect failed');
       this.description = error?.message;
       return false;
     }

@@ -165,7 +165,8 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
         <YStack gap={12}>
           <Input
             placeholder={t('main:profile_rename_profile')}
-            value={maskProfileText(nickname, redactMode)}
+            // Editing is an explicit reveal; masking an editable value would save bullets into the card.
+            value={nickname}
             onChangeText={c => setNickname(c)}
             borderWidth={1}
             borderRadius={radius.sm}
@@ -189,7 +190,7 @@ function Profile({route, navigation}: RootScreenProps<'Profile'>) {
               }}
               backgroundColor="$btnBackground">
               <TText color={theme.background?.val} fontSize={fontSize.md}>
-                Save
+                {t('main:profile_save')}
               </TText>
             </TButton>
           </XStack>

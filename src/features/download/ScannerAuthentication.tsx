@@ -14,6 +14,7 @@ import {selectDeviceState} from '@/store';
 import {useFormatSize} from '@/shared/hooks/useFormatSize';
 import {fontFamily, fontSize, radius} from '@/shared/theme/tokens';
 import SectionLabel from '@/shared/ui/SectionLabel';
+import {completeDownload} from './completeDownload';
 
 export function ScannerAuthentication({
   authenticateResult,
@@ -121,19 +122,13 @@ export function ScannerAuthentication({
               disabled={loading}
               onPress={() => {
                 makeLoading(setLoading, async () => {
-                  const downloadResult = await adapter.downloadProfile(
+                  const downloadResult = await completeDownload(
+                    adapter,
                     authenticateResult._internal,
                     confirmationCode,
+                    authenticateResult.profile.iccid,
                     setProgress,
                   );
-                  if (downloadResult.success) {
-                    try {
-                      const notifications = await adapter.processNotifications(authenticateResult.profile.iccid);
-                      downloadResult.notificationWarning = notifications.failed > 0 || notifications.refreshWarning;
-                    } catch {
-                      downloadResult.notificationWarning = true;
-                    }
-                  }
                   confirmDownload({downloadResult});
                 });
               }}
@@ -143,10 +138,7 @@ export function ScannerAuthentication({
                 paddingVertical: 14,
                 alignItems: 'center',
               }}>
-              <TText
-                color={theme.onFilled?.val}
-                fontSize={fontSize.xl}
-                fontWeight={'600' as any}>
+              <TText color={theme.onFilled?.val} fontSize={fontSize.xl} fontWeight={'600' as any}>
                 {t('main:profile_ui_download')}
               </TText>
             </TouchableOpacity>

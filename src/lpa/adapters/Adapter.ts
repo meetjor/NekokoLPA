@@ -39,6 +39,8 @@ export interface Device {
   displayName: string;
   deviceId: string;
   explicitConnectionRequired: boolean;
+  /** Identity of a discovered BLE transport, separate from its stable reader id. */
+  transportIdentity?: object;
   connect: () => Promise<boolean>;
   accessRule?: () => Promise<boolean>;
   disconnect: () => Promise<boolean>;
@@ -185,7 +187,9 @@ export class Adapter {
           throw error;
         }
         if (this.obsolete || !(await this.reconnect())) throw error;
-        return await (await setupDevice(this))(command, args);
+        return await (
+          await setupDevice(this)
+        )(command, args);
       }
     } finally {
       // Must run even when the retry throws, otherwise the device stays
@@ -222,7 +226,13 @@ export class Adapter {
       if (publish) {
         this.switchGeneration++;
         this.profiles = profiles;
-        this.setState({profiles, refreshError: false, switchSyncing: false, switchSyncError: false, switchTargetIccid: undefined});
+        this.setState({
+          profiles,
+          refreshError: false,
+          switchSyncing: false,
+          switchSyncError: false,
+          switchTargetIccid: undefined,
+        });
       }
       return profiles;
     }
@@ -236,9 +246,14 @@ export class Adapter {
     return notifications;
   }
 
-  async deleteNotification(seqNumber: number): Promise<Notification[]> {
+  async deleteNotification(seqNumber: number): Promise<{refreshWarning?: boolean}> {
     await this.execute('delete_notification_single', [seqNumber]);
-    return this.getNotifications();
+    try {
+      await this.getNotifications();
+      return {};
+    } catch {
+      return {refreshWarning: true};
+    }
   }
 
   async sendNotification(seqNumber: number): Promise<any> {
@@ -255,8 +270,12 @@ export class Adapter {
     const profiles = this.profiles.map(profile => ({
       ...profile,
       profileState: expected.enabled
-        ? profile.iccid === expected.iccid ? 1 : 0
-        : profile.iccid === expected.iccid ? 0 : profile.profileState,
+        ? profile.iccid === expected.iccid
+          ? 1
+          : 0
+        : profile.iccid === expected.iccid
+        ? 0
+        : profile.profileState,
     }));
     this.profiles = profiles;
     this.setState({
@@ -285,8 +304,7 @@ export class Adapter {
     const matches = (profiles: ProfileMetadataMap[]) =>
       profiles.some(
         profile =>
-          profile.iccid === expected.iccid &&
-          (profile.profileState === 1) === expected.enabled,
+          profile.iccid === expected.iccid && (profile.profileState === 1) === expected.enabled,
       );
 
     const verify = async (): Promise<boolean> => {
@@ -365,11 +383,7 @@ export class Adapter {
     } catch (error) {
       console.warn('[QianLesim] Switch outcome uncertain, verifying hardware state');
     }
-    await this.reloadAfterChange(
-      enabled ? 'standard' : 'disable',
-      {iccid, enabled},
-      generation,
-    );
+    await this.reloadAfterChange(enabled ? 'standard' : 'disable', {iccid, enabled}, generation);
   }
 
   async disableProfileByIccId(iccid: string): Promise<void> {
@@ -417,7 +431,10 @@ export class Adapter {
     callback: (update: ProgressUpdate) => void,
   ): Promise<DownloadResult> {
     this.callback = callback;
-    const result: DownloadResult = await this.execute('download_profile', [internalState, confirmationCode]);
+    const result: DownloadResult = await this.execute('download_profile', [
+      internalState,
+      confirmationCode,
+    ]);
     if (result.success) {
       try {
         await this.getProfiles();
@@ -440,12 +457,24 @@ export class Adapter {
     const DELETE = 0x10;
     const INSTALL_ENABLE_DISABLE = 0x20 | 0x40 | 0x80;
     const a: NotificationResult = await this.execute('process_notifications', [iccid, DELETE, 0]);
-    const b: NotificationResult = await this.execute('process_notifications', [iccid, INSTALL_ENABLE_DISABLE, 1]);
+    const b: NotificationResult = await this.execute('process_notifications', [
+      iccid,
+      INSTALL_ENABLE_DISABLE,
+      1,
+    ]);
     const result: NotificationResult = {
-      result: a.result || b.result, total: a.total + b.total, sent: a.sent + b.sent,
-      failed: a.failed + b.failed, removed: a.removed + b.removed, retained: a.retained + b.retained,
+      result: a.result || b.result,
+      total: a.total + b.total,
+      sent: a.sent + b.sent,
+      failed: a.failed + b.failed,
+      removed: a.removed + b.removed,
+      retained: a.retained + b.retained,
     };
-    try { await this.getNotifications(); } catch { result.refreshWarning = true; }
+    try {
+      await this.getNotifications();
+    } catch {
+      result.refreshWarning = true;
+    }
     return result;
   }
 }

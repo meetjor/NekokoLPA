@@ -14,6 +14,8 @@ import {
 } from '@/features/download/downloadPhases';
 import {useFormatSize} from '@/shared/hooks/useFormatSize';
 import SafeScreen from '@/shared/ui/SafeScreen';
+import {usePreference} from '@/shared/hooks/usePreference';
+import {isRedactMode, maskProfileText} from '@/shared/utils/redact';
 
 /**
  * Full-screen download progress.
@@ -39,6 +41,8 @@ export default function DownloadProgress({
 }) {
   const {t} = useTranslation(['main']);
   const theme = useTheme();
+  const storedRedact = usePreference('redactMode', 'none');
+  const redactMode = isRedactMode(storedRedact) ? storedRedact : 'none';
 
   const formatSize = useFormatSize();
 
@@ -107,7 +111,7 @@ export default function DownloadProgress({
                     fontSize={fontSize.xxl}
                     fontWeight={'600' as any}
                     letterSpacing={tracking.title}>
-                    {profileName}
+                    {maskProfileText(profileName, redactMode)}
                   </TText>
                 )}
               </YStack>

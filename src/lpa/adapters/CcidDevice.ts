@@ -58,7 +58,7 @@ export class CcidDevice implements Device {
       this.description = NO_AID_FOUND;
       return false;
     } catch (error: any) {
-      console.error('[CCID] connect failed', error);
+      console.error('[CCID] connect failed');
       this.description = error?.message;
       return false;
     }

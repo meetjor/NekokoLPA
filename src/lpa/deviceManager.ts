@@ -85,7 +85,9 @@ function discoverBluetoothDevices(): Device[] {
     }
     const match = BLE_ADAPTERS.find(a => a.matches(name));
     if (match) {
-      devices.push(match.create(bleDevice));
+      const device = match.create(bleDevice);
+      device.transportIdentity = bleDevice;
+      devices.push(device);
     }
   }
   return devices;
@@ -101,7 +103,8 @@ async function reconcileDevices(
   dispatch: Dispatch,
   targetDevice: string | null = null,
 ): Promise<void> {
-  if (Object.values(Adapters).some(a => a.isLocked)) throw new Error('Device operation in progress');
+  if (Object.values(Adapters).some(a => a.isLocked))
+    throw new Error('Device operation in progress');
   const devices: Device[] = [
     ...(await discoverOmapiDevices()),
     ...(await discoverCcidDevices()),
@@ -125,26 +128,43 @@ async function reconcileDevices(
 
   let failed = false;
   for (const device of devices) {
-    const existing = Adapters[device.deviceId];
+    let existing: Adapter | undefined = Adapters[device.deviceId];
+    if (
+      existing &&
+      device.transportIdentity &&
+      existing.device.transportIdentity !== device.transportIdentity
+    ) {
+      // Re-scanning the same BLE id can supply a new transport without an
+      // intervening "not found" discovery. Do not reuse the old session.
+      await existing.dispose();
+      delete Adapters[device.deviceId];
+      dispatch(removeDeviceState(device.deviceId));
+      existing = undefined;
+    }
     const adapter = existing ?? new Adapter(device, dispatch);
     // Preserve transport/session identity while updating current discovery data.
-    adapter.device.available = device.available;
-    adapter.device.slotAvailable = device.slotAvailable;
-    adapter.device.description = device.description;
-    adapter.device.signatures = device.signatures;
-    adapter.setState({available: device.available});
-    if (!device.available) {
+    // Only OMAPI discovery probes availability. USB/BLE constructors start
+    // false until connect() performs the card handshake; that is not absence.
+    if (device.type === 'omapi') {
+      adapter.device.available = device.available;
+      adapter.device.slotAvailable = device.slotAvailable;
+      adapter.device.description = device.description;
+      adapter.device.signatures = device.signatures;
+    }
+    adapter.setState({available: adapter.device.available});
+    if (device.type === 'omapi' && !device.available) {
       await adapter.disconnect();
       adapter.setState({refreshError: true});
       continue;
     }
     try {
-      if (existing) await adapter.refresh();
+      if (existing && adapter.connected) await adapter.refresh();
       else await adapter.initialize();
     } catch {
       adapter.setState({refreshError: true});
       failed = true;
     }
+    adapter.setState({available: adapter.device.available});
   }
 
   dispatch(setInternalDevices(devices.map(d => d.deviceId)));
@@ -156,11 +176,16 @@ async function reconcileDevices(
 
 // Serialize discoveries: native enumeration also touches logical channels.
 let discovery: Promise<void> = Promise.resolve();
-export function setupDevices(dispatch: Dispatch, targetDevice: string | null = null): Promise<void> {
-  const next = discovery.then(() => reconcileDevices(dispatch, targetDevice)).catch(error => {
-    dispatch(setInternalDevices(Object.keys(Adapters)));
-    throw error;
-  });
+export function setupDevices(
+  dispatch: Dispatch,
+  targetDevice: string | null = null,
+): Promise<void> {
+  const next = discovery
+    .then(() => reconcileDevices(dispatch, targetDevice))
+    .catch(error => {
+      dispatch(setInternalDevices(Object.keys(Adapters)));
+      throw error;
+    });
   discovery = next.catch(() => {});
   return next;
 }

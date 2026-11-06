@@ -3,6 +3,7 @@ import {Device} from 'react-native-ble-plx';
 
 import {Adapters, ConnectedBluetoothDevices} from '@/lpa/adapters/registry';
 import {setupDevices} from '@/lpa/deviceManager';
+import {removeDeviceState} from '@/store/slices';
 
 /** Device id as the adapter registry keys it. */
 function adapterIdFor(bleId: string): string {
@@ -10,9 +11,9 @@ function adapterIdFor(bleId: string): string {
 }
 
 export async function connectDevice(device: Device) {
-  if (!ConnectedBluetoothDevices.map(d => d.id).includes(device.id)) {
-    ConnectedBluetoothDevices.push(device);
-  }
+  const index = ConnectedBluetoothDevices.findIndex(d => d.id === device.id);
+  if (index < 0) ConnectedBluetoothDevices.push(device);
+  else ConnectedBluetoothDevices[index] = device;
 }
 
 /**
@@ -27,11 +28,10 @@ export async function connectDevice(device: Device) {
  */
 export async function disconnectDevice(bleId: string, dispatch: Dispatch): Promise<void> {
   const adapter = Adapters[adapterIdFor(bleId)];
-  try {
-    await adapter?.device.disconnect();
-  } catch (error) {
-    console.warn('[BLE] disconnect failed, dropping the reader anyway', error);
-  }
+  if (adapter?.isLocked) throw new Error('Device operation in progress');
+  await adapter?.dispose();
+  delete Adapters[adapterIdFor(bleId)];
+  dispatch(removeDeviceState(adapterIdFor(bleId)));
 
   const index = ConnectedBluetoothDevices.findIndex(d => d.id === bleId);
   if (index >= 0) {
@@ -54,7 +54,8 @@ export async function reconnectDevice(bleId: string, dispatch: Dispatch): Promis
   if (!adapter) {
     return false;
   }
-  const ok = await adapter.device.reconnect();
+  if (adapter.isLocked) throw new Error('Device operation in progress');
+  const ok = await adapter.reconnect();
   await setupDevices(dispatch);
   return ok;
 }

@@ -11,6 +11,7 @@ import SectionLabel from '@/shared/ui/SectionLabel';
 import RowGroup, {Row} from '@/shared/ui/RowGroup';
 import Pill from '@/shared/ui/Pill';
 import Loader from '@/shared/ui/Loader';
+import {reportOperationError} from '@/shared/utils/loading';
 import {getBleManager, requestBluetoothPermission} from '@/shared/utils/bluetooth';
 import {connectDevice, disconnectDevice, reconnectDevice} from '@/features/bluetooth/connection';
 import {isSupportedBleName, setupDevices} from '@/lpa/deviceManager';
@@ -90,7 +91,9 @@ export default function BluetoothSheet({
   const handleDisconnect = useCallback(
     (bleId: string) => {
       setBusyId(bleId);
-      void disconnectDevice(bleId, dispatch).finally(() => setBusyId(null));
+      void disconnectDevice(bleId, dispatch)
+        .catch(reportOperationError)
+        .finally(() => setBusyId(null));
     },
     [dispatch],
   );
@@ -98,7 +101,9 @@ export default function BluetoothSheet({
   const handleReconnect = useCallback(
     (bleId: string) => {
       setBusyId(bleId);
-      void reconnectDevice(bleId, dispatch).finally(() => setBusyId(null));
+      void reconnectDevice(bleId, dispatch)
+        .catch(reportOperationError)
+        .finally(() => setBusyId(null));
     },
     [dispatch],
   );
@@ -128,6 +133,8 @@ export default function BluetoothSheet({
           if (Adapters['ble:' + device.id]?.device.available === true) {
             onOpenChange(false);
           }
+        } catch {
+          reportOperationError();
         } finally {
           setBusyId(null);
         }

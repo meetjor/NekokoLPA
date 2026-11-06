@@ -11,6 +11,8 @@ on:
         package.json,
         yarn.lock,
         scripts/capture-android-ui.py,
+        scripts/prepare-notification-ui-check.cjs,
+        scripts/ui-fixtures/**,
         .github/workflows/qianlesim-release.yml,
       ]
   workflow_dispatch:
@@ -136,6 +138,8 @@ jobs:
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
+      - name: Prepare synthetic notification UI checks (never in published APK)
+        run: node scripts/prepare-notification-ui-check.cjs
       - name: Build x86_64 APK for UI checks (not published)
         working-directory: android
         run: bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitectures=x86_64
@@ -154,7 +158,7 @@ jobs:
           disable-animations: true
           script: |
             adb install $(find android/app/build/outputs/apk/release -name '*x86_64*.apk' -print -quit)
-            python3 scripts/capture-android-ui.py
+            python3 scripts/capture-android-ui.py --notification-fixture
       - uses: actions/upload-artifact@v4
         if: always()
         with:

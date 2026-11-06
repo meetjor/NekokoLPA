@@ -95,7 +95,7 @@ export class EstkMeRed2 implements Device {
       const channelResp = await this.transmit(APDU_OPEN_CHANNEL);
       const channel = openedChannel(channelResp);
       if (channel === null) {
-        console.error('[ESTKme-RED2] unusable MANAGE CHANNEL response', channelResp);
+        console.error('[ESTKme-RED2] unusable MANAGE CHANNEL response');
         this.description = `Failed to open channel (${channelResp})`;
         return false;
       }
@@ -109,7 +109,7 @@ export class EstkMeRed2 implements Device {
       this.description = NO_AID_FOUND;
       return false;
     } catch (error: any) {
-      console.error('[ESTKme-RED2] connect failed', error);
+      console.error('[ESTKme-RED2] connect failed');
       this.description = error?.message;
       return false;
     }
@@ -135,7 +135,7 @@ export class EstkMeRed2 implements Device {
         );
       }
     } catch (error) {
-      console.warn('[ESTKme-RED2] protocol negotiation failed, continuing', error);
+      console.warn('[ESTKme-RED2] protocol negotiation failed, continuing');
     }
   }
 
