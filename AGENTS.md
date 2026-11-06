@@ -21,11 +21,11 @@
 | 已发布 APK 的源码基线 | `3dcb622ab1d032efcd9be8a6231d93116c479711`；后续文档提交不等于新 APK |
 | 构建 | [Actions 42213389165](https://github.com/meetjor/NekokoLPA/actions/runs/42213389165) 构建/发布成功，TypeScript、162 项 Jest、9 项原生 HTTPS、ARM64、三签及 Android 14/15 页面检查通过 |
 | 签名验证 | 1.1.3 CI 与下载产物独立验签均确认 APK v2 有效，3 枚证书指纹匹配既有集合；Release 资产大小、SHA-256 与本地一致 |
-| 发布 | [v1.1.3-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.3-qianlesim-3sign)，预发布；1.1.3 尚无真机反馈，不沿用 1.1.0 的反馈作为本版验收 |
+| 发布 | [v1.1.3-qianlesim-3sign](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.3-qianlesim-3sign)，预发布；用户于 2026-11-07 在本版发布后反馈“真机测试没啥问题”；未提供逐项测试明细 |
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
-| 已知未解决 Bug | 用户通知页穿透、重叠、中文缺失与浅色状态栏问题已完成源码修复及模拟器验证，仍待用户真机确认；见 [1.1.3 说明与截图](docs/releases/1.1.3.md) |
+| 已知未解决 Bug | 原 A1–A10 已有修复，用户反馈本版真机未发现问题；其余依赖/发布加固/平台与验证待办见 [后续清单](docs/reviews/2026-11-07-follow-up.md) |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | 收集覆盖安装、读卡/切换、通知显示及 USB/BLE 反馈；用户指定七项已完成源码复核和补漏，本轮不扩大到依赖升级/iOS。 |
+| 当前下一步 | 后续按独立清单安排依赖和发布链加固；本次仅登记真机反馈与复核剩余事项，没有新增应用改动或构建。 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -148,3 +148,7 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 - Android 15 自动启用 edge-to-edge，但较旧系统默认不启用，可能造成浅色页面黑状态栏深色文字；通过 RN Gradle `edgeToEdgeEnabled=true` 统一行为，SafeScreen 继续处理安全区和图标色。
 - 通知发送按钮使用主题 btnBackground / btnForeground，CI 加入 Android 14 与 15 同 APK 页面检查。Android 14/15 模拟器已通过；旧系统真机仍待反馈。
 - 1.1.2 / 407 与 1.1.3 / 408 是独立构建版本，不覆盖先前标签或 APK；最终下载与证据已更新到 README、维护记录和 [1.1.3 页面验证](docs/releases/1.1.3-ui-checks.md)。
+
+## 13. 2026-11-07 用户反馈与剩余事项
+
+用户在 1.1.3 发布后反馈“真机测试没啥问题”，按当前使用范围登记为未发现异常，不推定所有运营商、USB/BLE 和断连故障均已测过。[后续清单](docs/reviews/2026-11-07-follow-up.md) 区分已修复 A1–A10、尚未处理的工程/安全治理及待验证范围。本次不更改应用代码、签名或版本，不触发构建。
