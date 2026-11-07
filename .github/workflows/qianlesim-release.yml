@@ -95,6 +95,7 @@ jobs:
         run: |
           corepack enable
           yarn install --immutable
+          yarn postinstall
           yarn security:patch
           yarn security:roots
           yarn security:audit

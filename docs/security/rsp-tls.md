@@ -13,7 +13,7 @@ The PEM files are copied exactly from the ChromiumOS Hermes production trust sto
 
 [Hermes trust-store rationale](https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/hermes/certs/README.md) distinguishes production and test roots. [GSMA's CI listing](https://www.gsma.com/solutions-and-impact/technologies/esim/gsma-root-ci/) also lists WISeKey: it has **not** been added here because its production certificate provenance/compatibility still needs review. Other proprietary or test CIs will fail closed unless their chain is already trusted by Android. Do not restore trust-all to make such a service work. Add any future root through a reviewed source/fingerprint update and compatibility tests.
 
-At initialization expired bundled roots are omitted. In particular, review the G+D compatibility root before May 2027. Root updates ship with app updates; this code does not download trust anchors. This is ordinary platform chain validation, not a new OCSP/CRL revocation implementation and not complete SGP.22 certification.
+Since 1.1.4, each bundled root is checked again on every new TLS handshake, including roots omitted from the server chain. In particular, review the G+D compatibility root before May 2027. Root updates ship with app updates; this code does not download trust anchors. This is ordinary platform chain validation, not a new OCSP/CRL revocation implementation and not complete SGP.22 certification.
 
 The three public APK signers (Sakura / Community / 9eSIM) remain unchanged. They authorize installation and card access; they do not replace HTTPS server validation.
 

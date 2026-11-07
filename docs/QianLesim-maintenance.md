@@ -129,3 +129,5 @@
 ## 2026-11-07 · 1.1.4 实施与本地验证
 
 已按用户要求处理依赖、发布来源、类型/中文/权限，排除 iOS；G+D 续期上游暂缺，新增安全生命周期处理。TypeScript、23 套件 167 项 Jest 通过；npm 957 个包名复扫仅 deepmerge 4.3.1 的已补丁命中，补丁字节和行为验证通过。尚未将这些本地结果记为 Android 构建、Maven 扫描或真机通过；待当前 CI 生成记录。
+
+首轮 [42323623768](https://github.com/meetjor/NekokoLPA/actions/runs/42323623768) 的 TypeScript/167 Jest/npm 审计通过；Gradle init 脚本也被应用到 RN 附属插件构建，因不存在 :app 而失败。已添加项目筛选与未解析依赖拒绝规则，并显式重跑 postinstall 保证缓存恢复后补丁生效。此次未生成/发布 APK，不改变版本号。
