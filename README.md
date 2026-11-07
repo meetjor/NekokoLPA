@@ -2,9 +2,9 @@
 
 基于 [iebb/NekokoLPA](https://github.com/iebb/NekokoLPA) 的个人定制 eSIM 管理应用。保留开源项目许可，不是官方 NekokoLPA 版本。
 
-## 1.1.4 安全维护（待本次构建核验）
+## 1.1.4 安全维护
 
-更新依赖、固定 Actions SHA 并加入 APK 来源证明，补齐中文/类型、精简新版 Android 蓝牙权限，并完善 HTTPS 根证书有效期检查。签名与界面保持一致。当前下载区仍提供已核验的 1.1.3，1.1.4 构建发布完成后更新。详见 [1.1.4 说明](docs/releases/1.1.4.md)。
+更新依赖、固定 Actions SHA 并加入 APK 来源证明，补齐中文/类型、精简新版 Android 蓝牙权限，并完善 HTTPS 根证书有效期检查。签名与界面保持一致。1.1.4 / 409 已完成构建、三签、依赖扫描、来源证明核验与预发布；用户反馈真机测试没问题。详见 [1.1.4 说明](docs/releases/1.1.4.md)。
 
 ## 1.1.3 状态栏兼容与通知修复
 
@@ -27,12 +27,14 @@
 
 ## 下载
 
-- **[QianLesim 1.1.3 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.3-qianlesim-3sign/QianLesim-v1.1.3-arm64.apk)**
-- [1.1.3 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.3-qianlesim-3sign) · [构建、测试与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42213389165) · [Android 14/15 截图与验证边界](docs/releases/1.1.3-ui-checks.md)
+- **[QianLesim 1.1.4 · ARM64 APK 直接下载](https://github.com/meetjor/NekokoLPA/releases/download/v1.1.4-qianlesim-3sign/QianLesim-v1.1.4-arm64.apk)**
+- [1.1.4 发布页](https://github.com/meetjor/NekokoLPA/releases/tag/v1.1.4-qianlesim-3sign) · [构建、测试与签名验证](https://github.com/meetjor/NekokoLPA/actions/runs/42346817160) · [完整核验证据与边界](docs/releases/1.1.4-verification.md)
 
-1.1.3 / 408 已通过 TypeScript、162 项 Jest、9 项 Android 原生 HTTPS 测试、ARM64 构建、三枚签名指纹比对，以及 Android 14/15 深浅色、长通知与放大字体检查。下载产物已独立验签，与 Release 的 SHA-256 一致。APK 为 61,799,513 字节，SHA-256：`716d4e6834fcdf233558c8990a5a3c273c58e734f64d67d6f9a5f9a2c8e19e1f`。
+1.1.4 / 409 已通过 TypeScript、23 套件 167 项 Jest、12 项 Android 原生测试、ARM64 构建、三枚签名指纹比对及 Android 14/15 页面检查。依赖扫描覆盖 957 个 npm 包名和 157 项 Android Maven 依赖；npm 唯一公告命中 deepmerge 已应用本地修复并校验，Maven 未命中。最终 APK 的构建来源证明已由发布 job 验证，随 Release 提供。
 
-请直接覆盖安装，检查通知页与浅色状态栏，再验证读卡和双向切换；无须卸载或删除 eSIM。**2026-11-07 用户反馈本版“真机测试没啥问题”**；没有逐项测试明细，真实运营商下载、USB/BLE 读卡器和异常断连不能据此全部判定通过。后续事项见 [复核清单](docs/reviews/2026-11-07-follow-up.md)。
+下载产物已独立验签并核对 Release SHA-256；APK 为 61,783,129 字节，SHA-256：`ffa5a198a7eea7ec1c5983791ec2ffcc5d1f8662bab25f5df26d00c1338c4a24`。
+
+保持原包名和三签，可直接覆盖安装，无须卸载或删除 eSIM。**2026-11-07 用户反馈本版“我已经去确认构建完成，真机测试没问题”**；这不代表全部运营商下载、USB/BLE 或异常断连均已有逐项测试。G+D 兼容根于 2027-05-10 到期，本版已补失效隔离和到期检查，可信替换仍待发行方；iOS 未纳入本轮。详见 [后续清单](docs/reviews/2026-11-07-follow-up.md)。
 
 旧版本与历史验证：
 

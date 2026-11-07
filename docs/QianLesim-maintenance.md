@@ -139,3 +139,13 @@ Okio 3.6.0 与 okio-jvm 的 OSV 查询均无命中。Android 集成与 TLS 测�
 已完成隔离回归：同一 Java 字节码（以旧 Okio 编译）和同一合成 GZIP，Okio 2.9.0 抛 IllegalArgumentException，3.6.0 抛预期 EOFException。验证新版二进制兼容及该异常修复；不替代 Android 集成检查。
 
 第三轮 [42346213364](https://github.com/meetjor/NekokoLPA/actions/runs/42346213364) npm/Maven 扫描通过，原生编译完成，12 项测试中新增的 2 项根有效期测试失败：测试直接调用 JDK TrustManager 时传入了不支持的认证类型 EC。隔离 Java 程序确认 EC 返回 Unknown authType，而 ECDHE_ECDSA 正常接受同一有效链；修正测试参数，同时让 HTTPS 成功/错误测试通过实际组合信任管理器。两份 Kotlin 源文件在本地 JVM 编译并运行全部 12 项测试通过；待 CI 集成/正式 APK。测试没有放宽证书校验或改为伪造信任结果。
+
+## 2026-11-07 · 1.1.4 发布核验与用户反馈收尾
+
+- 源码 `591459a2bd5227bfb0df642fb4fdc1eaa832469b`，版本 1.1.4 / 409。[Actions 42346817160](https://github.com/meetjor/NekokoLPA/actions/runs/42346817160) build/publish 均成功；前述三次失败均未发布 APK。
+- TypeScript、23 套件 167 项 Jest、12 项原生测试、ARM64、合并权限、三签与 Android 14/15 页面检查通过。npm 957 个包名仅 deepmerge 已本地补丁命中；Maven 实际 157 项无公告命中，已使用修复的 Okio。
+- 最终三签 APK 的来源证明由发布 job 验证后发布；独立下载产物验签通过，三枚证书指纹与既有集合一致。APK 61,783,129 字节，SHA-256 `ffa5a198a7eea7ec1c5983791ec2ffcc5d1f8662bab25f5df26d00c1338c4a24`，与 Release API、校验文件及证明 subject 一致。
+- 两枚打包 RSP 根指纹一致，正式 bundle 无合成通知标记。人工复核浅色与深色大字体通知截图未见原穿透/重叠。
+- 用户于本版发布后反馈：“我已经去确认构建完成，真机测试没问题。你继续”。按当前使用无异常登记，不代填全部外接读卡器、运营商及异常条件测试结果。
+- [完整发布核验](releases/1.1.4-verification.md)、[当前后续状态](reviews/2026-11-07-follow-up.md)。本轮 Android 治理完成；iOS 按要求排除。G+D 根 2027-05-10 到期，可信续期仍待发行方；deepmerge 本地补丁最迟 2027-02-01 复核。
+- 同步 README、AGENTS、版本说明和审查状态；仅文档收尾，不重新编译相同版本。

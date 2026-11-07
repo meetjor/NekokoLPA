@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-11-07T06:25:40.768Z",
+  "source": "npm bulk advisories",
+  "packageNames": 957,
+  "findings": [
+    {
+      "name": "deepmerge",
+      "version": "4.3.1",
+      "advisory": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+      "severity": "low",
+      "disposition": "locally-patched"
+    }
+  ]
+}
