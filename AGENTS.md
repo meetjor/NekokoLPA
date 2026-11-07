@@ -17,7 +17,7 @@
 
 | 项目 | 已知状态与证据 |
 | --- | --- |
-| 当前源码版本 | QianLesim 1.1.3 / versionCode 408，七项问题复核、通知显示与旧版 Android 状态栏修复已发布 |
+| 当前源码版本 | QianLesim 1.1.4 / versionCode 409，依赖/发布链/类型中文权限与证书有效期维护已实施，待本次 CI 验证；下方发布证据仍属于 1.1.3 |
 | 已发布 APK 的源码基线 | `3dcb622ab1d032efcd9be8a6231d93116c479711`；后续文档提交不等于新 APK |
 | 构建 | [Actions 42213389165](https://github.com/meetjor/NekokoLPA/actions/runs/42213389165) 构建/发布成功，TypeScript、162 项 Jest、9 项原生 HTTPS、ARM64、三签及 Android 14/15 页面检查通过 |
 | 签名验证 | 1.1.3 CI 与下载产物独立验签均确认 APK v2 有效，3 枚证书指纹匹配既有集合；Release 资产大小、SHA-256 与本地一致 |
@@ -25,7 +25,7 @@
 | 原切换 Bug | **用户于 2026-11-05 明确反馈“最新版已经修复切换的bug”**。不要继续把它当作当前未解决问题，或重复追加未经验证的修复 |
 | 已知未解决 Bug | 原 A1–A10 已有修复，用户反馈本版真机未发现问题；其余依赖/发布加固/平台与验证待办见 [后续清单](docs/reviews/2026-11-07-follow-up.md) |
 | 验证边界 | 跨设备、连续切换、异常断连等没有完整逐项回归记录，不得声称已全部通过 |
-| 当前下一步 | 后续按独立清单安排依赖和发布链加固；本次仅登记真机反馈与复核剩余事项，没有新增应用改动或构建。 |
+| 当前下一步 | 完成 1.1.4 原生编译、扫描、三签、来源证明与发布核验，再回填实际证据；iOS 明确排除，第三方根续期待上游 |
 
 历史故障为切换后 Loading 不结束，以及实际已切换但界面仍显示旧配置、需下拉刷新。之前已尝试 finally 清理 Loading、延迟刷新、轮询、乐观 Redux 更新和 SIM REFRESH 异常处理；复现时必须沿调用链定位，不能简单重复这些方案。
 
@@ -152,3 +152,9 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 ## 13. 2026-11-07 用户反馈与剩余事项
 
 用户在 1.1.3 发布后反馈“真机测试没啥问题”，按当前使用范围登记为未发现异常，不推定所有运营商、USB/BLE 和断连故障均已测过。[后续清单](docs/reviews/2026-11-07-follow-up.md) 区分已修复 A1–A10、尚未处理的工程/安全治理及待验证范围。本次不更改应用代码、签名或版本，不触发构建。
+
+## 14. 1.1.4 安全维护（进行中）
+
+用户授权修复依赖、发布链和类型/中文/权限整理，明确排除 iOS。见 [变更](docs/releases/1.1.4.md)、[依赖和来源证明](docs/security/dependency-maintenance.md)。BLE 升到 3.5.1，不再附带 Expo；deepmerge 与 glob 模块导出兼容补丁必须保留，postinstall 后运行 security:patch / security:audit / security:roots。下载/切换协议不重写。
+
+G+D 根上游仍为 2027-05-10 到期证书；仅能补有效期隔离、中文失败提示、构建阈值检查和审查更新流程，不能宣称已续期。当前来源/版本清单见 docs/security/rsp-roots.json。CI 固定 Actions SHA 并要求最终 APK 来源证明通过后发布；公开三签不变。新增 patches、scripts/security、docs/security 改动会触发构建，因此后续纯状态文档尽量写入发布/维护记录，避免重复同版本构建。

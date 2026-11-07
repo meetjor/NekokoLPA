@@ -158,3 +158,6 @@ ds-bundle/
 .design-sync/.cache/
 .design-sync/learnings/
 .design-sync/node_modules
+
+# Local release and security-audit outputs (CI artifacts, not source)
+/dist/

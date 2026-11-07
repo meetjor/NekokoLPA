@@ -5,12 +5,8 @@
 
 import { byteToHex, bytesToHex } from './bytes';
 
-export interface RemoteError {
-  status?: string;
-  message?: string;
-  reasonCode?: string;
-  subjectCode?: string;
-}
+import type {RemoteError} from '../types/profile';
+export type {RemoteError} from '../types/profile';
 
 /** Thrown for anything that carries an ES9+ status block. */
 export class RemoteErrorException extends Error {

@@ -1,3 +1,5 @@
+import type {LpaArg, LpaCommand, LpaCommandResults, CommandStatus, AuthenticationResult, DiscoveryResult} from '../types/commands';
+export type {LpaArg} from '../types/commands';
 import {Dispatch} from '@reduxjs/toolkit';
 
 import {Adapters} from '@/lpa/adapters/registry';
@@ -8,8 +10,6 @@ import type {DeviceState} from '@/store/slices';
 import type {EuiccInfoResult, Notification, ProgressUpdate} from '@/lpa/types/euicc';
 import type {ProfileMetadataMap} from '@/lpa/types/profile';
 
-/** Arguments accepted by an LPA command. */
-export type LpaArg = string | number;
 
 /**
  * How long to let a card settle after a state-changing operation before we read
@@ -160,7 +160,7 @@ export class Adapter {
     }
   }
 
-  async _execute(command: string, args: LpaArg[]): Promise<any> {
+  async _execute<C extends LpaCommand>(command: C, args: LpaArg[]): Promise<LpaCommandResults[C]> {
     return (await setupDevice(this))(command, args);
   }
 
@@ -171,7 +171,7 @@ export class Adapter {
    * transaction once after reconnect; never replay a state-changing command
    * when the card may already have accepted it.
    */
-  async execute(command: string, args: LpaArg[]): Promise<any> {
+  async execute<C extends LpaCommand>(command: C, args: LpaArg[]): Promise<LpaCommandResults[C]> {
     if (this.obsolete) throw new Error('Device disconnected');
     if (this.isLocked) {
       throw new Error(`Device ${this.deviceId} is busy; cannot run "${command}" concurrently`);
@@ -256,7 +256,7 @@ export class Adapter {
     }
   }
 
-  async sendNotification(seqNumber: number): Promise<any> {
+  async sendNotification(seqNumber: number): Promise<CommandStatus> {
     return this.execute('process_notification_single', [seqNumber]);
   }
 
@@ -394,13 +394,13 @@ export class Adapter {
     await this.changeProfileByIccId(iccid, true);
   }
 
-  async setNicknameByIccId(iccid: string, nickname: string): Promise<any> {
+  async setNicknameByIccId(iccid: string, nickname: string): Promise<CommandStatus> {
     const result = await this.execute('rename_profile', [iccid, nickname]);
     await this.getProfiles();
     return result;
   }
 
-  async deleteProfileByIccId(iccid: string): Promise<any> {
+  async deleteProfileByIccId(iccid: string): Promise<CommandStatus> {
     const result = await this.execute('delete_profile', [iccid]);
     await this.reloadAfterChange('standard');
     return result;
@@ -411,17 +411,17 @@ export class Adapter {
     matchingId: string,
     callback: (update: ProgressUpdate) => void,
     imei = '',
-  ): Promise<any> {
+  ): Promise<AuthenticationResult> {
     this.callback = callback;
     return this.execute('authenticate_profile', [smdp, matchingId, imei]);
   }
 
-  async smdsDiscovery(callback: (update: ProgressUpdate) => void): Promise<any> {
+  async smdsDiscovery(callback: (update: ProgressUpdate) => void): Promise<DiscoveryResult> {
     this.callback = callback;
     return this.execute('discover_profile', ['lpa.ds.gsma.com', '356303455555555']);
   }
 
-  async cancelSession(internalState: string): Promise<any> {
+  async cancelSession(internalState: string): Promise<CommandStatus> {
     return this.execute('cancel_download', [internalState]);
   }
 

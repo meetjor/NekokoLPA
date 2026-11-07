@@ -1,3 +1,5 @@
+import type {AuthenticatedProfile} from '@/lpa/types/commands';
+import type {DownloadResult} from '@/lpa/types/operations';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity, View} from 'react-native';
@@ -12,7 +14,17 @@ import {useLoading} from '@/app/providers/LoadingProvider';
 import {fontSize, iconSize, radius, tracking} from '@/shared/theme/tokens';
 import SectionLabel from '@/shared/ui/SectionLabel';
 
-export function ScannerResult({authenticateResult, downloadResult, deviceId, goBack}: any) {
+export function ScannerResult({
+  authenticateResult,
+  downloadResult,
+  deviceId,
+  goBack,
+}: {
+  authenticateResult: AuthenticatedProfile;
+  downloadResult: DownloadResult;
+  deviceId: string;
+  goBack: () => void;
+}) {
   const [followupDone, setFollowupDone] = useState(false);
   const {t} = useTranslation(['main']);
   const theme = useTheme();
@@ -20,9 +32,7 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
   const adapter = Adapters[deviceId];
 
   return (
-    <Screen
-      keyboardAvoiding={false}
-      scrollViewProps={{nestedScrollEnabled: true}}>
+    <Screen keyboardAvoiding={false} scrollViewProps={{nestedScrollEnabled: true}}>
       {downloadResult?.success ? (
         <YStack gap={24}>
           {/* The green disc was 96px of decoration around a 56px icon that
@@ -34,7 +44,7 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
               <TText
                 color="$textDefault"
                 fontSize={fontSize.display}
-                fontWeight={'700' as any}
+                fontWeight="700"
                 letterSpacing={tracking.title}
                 flexShrink={1}>
                 {t('main:profile_download_success')}
@@ -45,19 +55,27 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
             </TText>
           </YStack>
 
-          {!followupDone && (downloadResult.refreshWarning || downloadResult.notificationWarning) && (
-            <YStack gap={8}>
-              <TText color="$statusWarning">{t('main:ui_install_followup_warning')}</TText>
-              <TButton onPress={() => makeLoading(setLoading, async () => {
-                await adapter.refresh();
-                const result = await adapter.processNotifications(authenticateResult.profile.iccid);
-                if (result.failed || result.refreshWarning) throw new Error('Notifications pending');
-                setFollowupDone(true);
-              })} disabled={followupDone}>
-                {t(followupDone ? 'main:ui_sync_done' : 'main:ui_retry_sync')}
-              </TButton>
-            </YStack>
-          )}
+          {!followupDone &&
+            (downloadResult.refreshWarning || downloadResult.notificationWarning) && (
+              <YStack gap={8}>
+                <TText color="$statusWarning">{t('main:ui_install_followup_warning')}</TText>
+                <TButton
+                  onPress={() =>
+                    makeLoading(setLoading, async () => {
+                      await adapter.refresh();
+                      const result = await adapter.processNotifications(
+                        authenticateResult.profile.iccid,
+                      );
+                      if (result.failed || result.refreshWarning)
+                        throw new Error('Notifications pending');
+                      setFollowupDone(true);
+                    })
+                  }
+                  disabled={followupDone}>
+                  {t(followupDone ? 'main:ui_sync_done' : 'main:ui_retry_sync')}
+                </TButton>
+              </YStack>
+            )}
           <YStack gap={8}>
             <YStack paddingLeft={4}>
               <SectionLabel>{t('main:profile_information')}</SectionLabel>
@@ -90,7 +108,7 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
                 paddingVertical: 14,
                 alignItems: 'center',
               }}>
-              <TText color={theme.onFilled?.val} fontSize={fontSize.xl} fontWeight={'600' as any}>
+              <TText color={theme.onFilled?.val} fontSize={fontSize.xl} fontWeight="600">
                 {t('main:profile_ui_enable')}
               </TText>
             </TouchableOpacity>
@@ -126,11 +144,11 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
                   textAlign="center"
                   fontSize={fontSize.xxl}
                   color="$textDefault"
-                  fontWeight={'600' as any}>
+                  fontWeight="600">
                   {t('main:profile_download_failure')}
                 </TText>
                 <TText textAlign="center" fontSize={fontSize.md} color="$color6">
-                  Unable to download the profile. Please try again.
+                  {t('main:profile_download_failure_body')}
                 </TText>
               </YStack>
             </YStack>
@@ -157,7 +175,7 @@ export function ScannerResult({authenticateResult, downloadResult, deviceId, goB
             }}>
             <XStack alignItems="center" gap={10}>
               <X size={18} color="#ffffff" />
-              <TText color="#ffffff" fontSize={fontSize.lg} fontWeight={'500' as any}>
+              <TText color="#ffffff" fontSize={fontSize.lg} fontWeight="500">
                 {t('main:profile_ui_back')}
               </TText>
             </XStack>

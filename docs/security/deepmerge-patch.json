@@ -1,0 +1,10 @@
+{
+  "advisory": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+  "version": "4.3.1",
+  "reviewBy": "2027-02-01",
+  "files": {
+    "index.js": "7bdf7ea3ca7e87aab6013baeb1fbbe0ddbf9537a1718d904c19c6ba4b62a4748",
+    "dist/cjs.js": "5db312cc3274cef2ebca1b99bd1d3ef48be52fd13de7a1401b6685ab20f5c69e",
+    "dist/umd.js": "3d624a7360f6dbff7aa0c422f47545785d26eb9b08ea5bf6a1cdc483326d3894"
+  }
+}

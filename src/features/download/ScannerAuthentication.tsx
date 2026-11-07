@@ -1,3 +1,6 @@
+import type {AuthenticationResult} from '@/lpa/types/commands';
+import type {DownloadResult} from '@/lpa/types/operations';
+import type {ProgressUpdate} from '@/lpa/types/euicc';
 import React, {useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
@@ -22,12 +25,18 @@ export function ScannerAuthentication({
   goBack,
   confirmDownload,
   initialConfirmationCode,
-}: any) {
+}: {
+  authenticateResult: AuthenticationResult;
+  deviceId: string;
+  goBack: () => void;
+  confirmDownload: (result: {downloadResult: DownloadResult}) => void;
+  initialConfirmationCode: string;
+}) {
   const theme = useTheme();
   const {t} = useTranslation(['main']);
   const formatSize = useFormatSize();
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState({} as any);
+  const [progress, setProgress] = useState<ProgressUpdate>({});
   const [confirmationCode, setConfirmationCode] = useState(initialConfirmationCode);
   const DeviceState = useSelector(selectDeviceState(deviceId));
 
@@ -45,8 +54,10 @@ export function ScannerAuthentication({
         <DownloadProgress
           target={adapter?.device?.displayName ?? ''}
           profileName={
-            authenticateResult?.profile?.serviceProviderName ??
-            authenticateResult?.profile?.profileName
+            authenticateResult.success
+              ? authenticateResult.profile.serviceProviderName ||
+                authenticateResult.profile.profileName
+              : undefined
           }
           progress={progress}
         />
@@ -78,7 +89,7 @@ export function ScannerAuthentication({
               <YStack gap={8}>
                 <SectionLabel>{t('main:profile_conf_code')}</SectionLabel>
                 <Input
-                  placeholder="Enter confirmation code"
+                  placeholder={t('main:profile_conf_code_placeholder')}
                   value={confirmationCode}
                   onChangeText={c => setConfirmationCode(c)}
                   borderWidth={1}
@@ -106,9 +117,9 @@ export function ScannerAuthentication({
               </TText>
               <TText
                 color="$textDefault"
-                fontFamily={fontFamily.mono as any}
+                style={{fontFamily: fontFamily.mono}}
                 fontSize={fontSize.xl}
-                fontWeight={'600' as any}>
+                fontWeight="600">
                 {formatSize(freeSpace)}
               </TText>
             </XStack>
@@ -138,7 +149,7 @@ export function ScannerAuthentication({
                 paddingVertical: 14,
                 alignItems: 'center',
               }}>
-              <TText color={theme.onFilled?.val} fontSize={fontSize.xl} fontWeight={'600' as any}>
+              <TText color={theme.onFilled?.val} fontSize={fontSize.xl} fontWeight="600">
                 {t('main:profile_ui_download')}
               </TText>
             </TouchableOpacity>
@@ -170,7 +181,7 @@ export function ScannerAuthentication({
                 textAlign="center"
                 fontSize={fontSize.xxl}
                 color="$textDefault"
-                fontWeight={'600' as any}>
+                fontWeight="600">
                 {t('main:profile_download_failure')}
               </TText>
               <RemoteErrorView remoteError={authenticateResult} />
@@ -185,7 +196,7 @@ export function ScannerAuthentication({
             }}>
             <XStack alignItems="center" gap={10}>
               <X size={18} color="$btnForeground" />
-              <TText color="$btnForeground" fontSize={fontSize.lg} fontWeight={'500' as any}>
+              <TText color="$btnForeground" fontSize={fontSize.lg} fontWeight="500">
                 {t('main:profile_ui_back')}
               </TText>
             </XStack>

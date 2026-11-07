@@ -1,0 +1,16 @@
+[
+  {
+    "file": "gsma-ci.pem",
+    "sha256": "5e3e91fd454327c3af5d32a7a73bbc59fe43aa7d85fd32d5db44423f80a56bb3",
+    "notAfter": "2052-02-21T23:59:59.000Z",
+    "source": "https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/hermes/certs/prod/gsma-ci.pem",
+    "verifiedOn": "2026-11-07"
+  },
+  {
+    "file": "gd-smdp.pem",
+    "sha256": "2ce2d6787f3b6411b89e675e7eb3e87f88179bf5b08a6ec78d95a6167700c78b",
+    "notAfter": "2027-05-10T00:00:00.000Z",
+    "source": "https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/hermes/certs/prod/gd-smdp.pem",
+    "verifiedOn": "2026-11-07"
+  }
+]

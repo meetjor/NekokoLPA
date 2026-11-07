@@ -1,3 +1,4 @@
+import type {LpaArg, LpaCommand, LpaCommandResults, OperationFailure} from '../types/commands';
 /**
  * lpac-compatible command dispatcher.
  *
@@ -20,13 +21,14 @@ export interface DispatcherOptions {
 }
 
 /** Flattened so <RemoteErrorView remoteError={result} /> keeps working. */
-function failure(error: unknown): any {
+function failure(error: unknown): OperationFailure {
   if (error instanceof RemoteErrorException) {
     return { success: false, ...error.remoteError, remoteError: error.remoteError };
   }
   const message = error instanceof Error ? error.message : String(error);
   const remoteError: RemoteError = {
     status: 'Failed',
+    code: typeof error === 'object' && error !== null && 'code' in error && error.code === 'TLS_CERTIFICATE_ERROR' ? 'TLS_CERTIFICATE_ERROR' : undefined,
     message,
     reasonCode: '',
     subjectCode: '',
@@ -99,7 +101,8 @@ export class LpaDispatcher {
     return result;
   }
 
-  async execute(fn: string, args: any[]): Promise<any> {
+  async execute<C extends LpaCommand>(fn: C, args: LpaArg[]): Promise<LpaCommandResults[C]>;
+  async execute(fn: LpaCommand, args: LpaArg[]): Promise<LpaCommandResults[LpaCommand]> {
     switch (fn) {
       case 'set_apdu_mtu': {
         this.lpa.setMaxSegment(Number(args[0]));

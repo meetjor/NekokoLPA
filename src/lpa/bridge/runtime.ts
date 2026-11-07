@@ -1,4 +1,4 @@
-import {Adapter, LpaArg} from '@/lpa/adapters/Adapter';
+import {Adapter} from '@/lpa/adapters/Adapter';
 import {CustomHttp} from '@/lpa/bridge/nativeModules';
 import {CLA_PROPRIETARY, LpaDispatcher, channelClaHex} from '@/lpa/core';
 
@@ -8,7 +8,8 @@ const SW_TRANSMIT_FAILED = '6000';
 /** MTU the 9eSIM Bluetooth writer needs for chunked APDUs. */
 const NINE_ESIM_APDU_MTU = 63;
 
-export type LpaExecutor = (command: string, args: LpaArg[]) => Promise<any>;
+import type {LpaExecutor} from '../types/commands';
+export type {LpaExecutor} from '../types/commands';
 
 /**
  * One dispatcher per device.

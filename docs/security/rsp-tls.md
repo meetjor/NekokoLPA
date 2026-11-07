@@ -22,3 +22,13 @@ The three public APK signers (Sakura / Community / 9eSIM) remain unchanged. They
 `RspHttpClientTest` uses local synthetic servers/certificates: trusted, untrusted, wrong hostname, expired, redirect, invalid/cleartext URL, body truncation, oversized body, and production-root loading. Tests do not send a real activation code or install/delete a card profile. The mocked trusted-CA test proves the validator path, not possession of a production root's signing key. Real operator downloads and Android-specific certificate/provider behavior remain device checks.
 
 This release targets Android. The legacy `ios/CustomHttp.swift` implementation has not been hardened or released as part of this work; do not advertise cross-platform TLS remediation.
+
+## 1.1.4：有效期与兼容维护
+
+2026-11-07 复核 ChromiumOS Hermes 生产目录，上游 `gd-smdp.pem` 仍与本仓库一致，截止时间为 **2027-05-10 00:00 UTC**，尚无已核验的替换证书。应用不能为第三方 CA 续期，不能修改证书日期、信任任意新根或跳过链/域名校验。APK 三签也不能解决 HTTPS CA 到期。
+
+- `RspHttpClient.trustManager` 按每枚兼容根建立独立信任管理器，每次新 TLS 握手重新检查根有效期，包含服务器未发送根的情况。应用缓存的客户端不能绕过有效期检查；系统信任独立存在，一枚过期根不会拖累其他有效根。
+- HTTPS 校验/握手错误返回不含服务器 URL 或激活标识的 `TLS_CERTIFICATE_ERROR`，下载页显示检查系统日期、升级应用、联系运营商更新链的中文提示。该提示不表示一定是根过期，域名/未知 CA/协议问题也可能触发。
+- `docs/security/rsp-roots.json` 固定来源、DER SHA-256 和有效期；`yarn security:roots` 每次构建校验指纹、自签 CA 与有效期，剩余 ≤180 天警告、≤90 天阻止新发布。它只在执行构建/本地检查时运行，不宣称已部署定时监控。
+- 后续替换流程：从 CA/可信维护方获取生产证书 → 核对指纹、用途、链和有效期 → 更新 PEM 与清单/打包指纹断言 → 原生正反向 TLS 测试 → 有正常下载需求时真机验证 → 新版三签发布。若没有可信替代，可审查后明确退役兼容根；不得静默关闭校验。
+- 系统已信任的新证书链可以直接工作，但仍使用此旧根的服务需要发行方迁移。**到期后兼容所有运营商并未解决，也不能承诺。**

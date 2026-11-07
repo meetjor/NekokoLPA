@@ -1,3 +1,4 @@
+import type {AuthenticationResult} from '@/lpa/types/commands';
 import Screen from '@/shared/ui/Screen';
 import {useWindowDimensions, View} from 'react-native';
 import {
@@ -39,7 +40,17 @@ import {toCIName} from '@/shared/utils/friendlyName';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {fontSize, radius} from '@/shared/theme/tokens';
 
-export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
+interface ScannerInitialProps {
+  appLink?: string;
+  deviceId: string;
+  finishAuthenticate: (result: {
+    authenticateResult: AuthenticationResult;
+    smdp: string;
+    confirmationCode: string;
+  }) => void;
+}
+
+export function ScannerInitial({appLink, deviceId, finishAuthenticate}: ScannerInitialProps) {
   const theme = useTheme();
   const {width} = useWindowDimensions();
   const formatSize = useFormatSize();
@@ -105,9 +116,9 @@ export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
 
   const handleDiscovery = async () => {
     await makeLoading(setLoading, async () => {
-      const authenticateResult = await adapter.smdsDiscovery((e: any) =>
+      const authenticateResult = await adapter.smdsDiscovery(e =>
         setLoading(
-          (t(`main:progress_${e.message}`, e) as string) ??
+          (t(`main:progress_${e.message}`, {...e}) as string) ??
             t('main:profile_loading_validating_profile'),
         ),
       );
@@ -116,12 +127,12 @@ export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
         if (authenticateResult.success) {
           if (authenticateResult.smdp_list.length === 1) {
             setSmdp(authenticateResult.smdp_list[0]);
-            showToast('SM-DP Discovered.', 'success');
+            showToast(t('main:discovery_found'), 'success');
           } else if (authenticateResult.smdp_list.length === 0) {
-            showToast('Discovered nothing.', 'success');
+            showToast(t('main:discovery_empty'), 'success');
           } else {
             setSmdp(authenticateResult.smdp_list[0]);
-            showToast('Multiple SM-DPs has been discovered.', 'success');
+            showToast(t('main:discovery_multiple'), 'success');
           }
         } else {
           showToast('Failed to discover SM-DPs.', 'error');
@@ -140,7 +151,7 @@ export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
           padding={16}
           borderWidth={0}>
           <YStack gap={8}>
-            <TText color="$textDefault" fontSize={fontSize.lg} fontWeight={'600' as any}>
+            <TText color="$textDefault" fontSize={fontSize.lg} fontWeight="600">
               {t('main:profile_current_euicc', {device: adapter.device.deviceName})}
             </TText>
             <XStack gap={8}>
@@ -151,9 +162,7 @@ export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
               </TText>
               <TText color="$color6" fontSize={fontSize.md} maxWidth="50%">
                 CI:{' '}
-                {DeviceState.euiccInfo2?.euiccCiPKIdListForSigning
-                  .map((x: any) => toCIName(x))
-                  .join(', ')}
+                {DeviceState.euiccInfo2?.euiccCiPKIdListForSigning.map(x => toCIName(x)).join(', ')}
               </TText>
             </XStack>
           </YStack>
@@ -349,9 +358,9 @@ export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
                 const authenticateResult = await adapter.authenticateProfile(
                   smdp,
                   acToken,
-                  (e: any) =>
+                  e =>
                     setLoading(
-                      (t(`main:progress_${e.message}`, e) as string) ??
+                      (t(`main:progress_${e.message}`, {...e}) as string) ??
                         t('main:profile_loading_validating_profile'),
                     ),
                   imei.length === 15 ? imei : '356303455555555',
@@ -366,7 +375,7 @@ export function ScannerInitial({appLink, deviceId, finishAuthenticate}: any) {
           }}>
           <XStack alignItems="center" gap={12}>
             <Download size={20} color="$btnForeground" />
-            <TText color="$btnForeground" fontSize={fontSize.lg} fontWeight={'600' as any}>
+            <TText color="$btnForeground" fontSize={fontSize.lg} fontWeight="600">
               {t('main:profile_ui_download')}
             </TText>
           </XStack>

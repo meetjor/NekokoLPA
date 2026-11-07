@@ -4,8 +4,8 @@
  */
 
 export interface CertificationDataObject {
-  discoveryBaseURL: string;
-  platformLabel: string;
+  discoveryBaseURL?: string;
+  platformLabel?: string;
 }
 
 export interface EXTCardResource {
@@ -17,7 +17,7 @@ export interface EXTCardResource {
 /** GSMA EUICCInfo2 structure. */
 export interface EuiccInfo2 {
   certificationDataObject: CertificationDataObject;
-  euiccCategory: null;
+  euiccCategory: number | null;
   euiccCiPKIdListForSigning: string[];
   euiccCiPKIdListForVerification: string[];
   euiccFirmwareVer: string;

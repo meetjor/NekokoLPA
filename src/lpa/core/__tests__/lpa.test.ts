@@ -529,6 +529,7 @@ describe('LpaDispatcher', () => {
       'QR-G-5C-1LS',
       '356303455555555',
     ]);
+    if (!auth.success) throw new Error('Expected successful test authentication');
 
     expect(auth.success).toBe(true);
     expect(auth.isCcRequired).toBe(false);
@@ -587,6 +588,7 @@ describe('LpaDispatcher', () => {
     const bridge = new LpaDispatcher({ transmit: card.transmit, http, maxSegment: 64 });
 
     const auth = await bridge.execute('authenticate_profile', ['rsp.example.com', 'MATCH', '']);
+    if (!auth.success) throw new Error('Expected successful test authentication');
     expect(auth.isCcRequired).toBe(true);
 
     await bridge.execute('download_profile', [auth._internal, 'secret']);
@@ -610,6 +612,7 @@ describe('LpaDispatcher', () => {
     const bridge = new LpaDispatcher({ transmit: card.transmit, http, maxSegment: 64 });
 
     const auth = await bridge.execute('authenticate_profile', ['rsp.example.com', 'MATCH', '']);
+    if (!auth.success) throw new Error('Expected successful test authentication');
     const result = await bridge.execute('download_profile', [auth._internal, '']);
     expect(result.success).toBe(false);
     expect(result.message).toMatch(/confirmation code/i);
@@ -772,6 +775,7 @@ describe('LpaDispatcher', () => {
     const bridge = new LpaDispatcher({ transmit: card.transmit, http, maxSegment: 64 });
 
     const auth = await bridge.execute('authenticate_profile', ['rsp.example.com', 'MATCH', '']);
+    if (!auth.success) throw new Error('Expected successful test authentication');
     const result = await bridge.execute('download_profile', [auth._internal, '']);
 
     expect(result.success).toBe(false);
@@ -795,6 +799,7 @@ describe('LpaDispatcher', () => {
     const bridge = new LpaDispatcher({ transmit: card.transmit, http, maxSegment: 64 });
 
     const auth = await bridge.execute('authenticate_profile', ['rsp.example.com', 'MATCH', '']);
+    if (!auth.success) throw new Error('Expected successful test authentication');
     await expect(bridge.execute('cancel_download', [auth._internal])).resolves.toEqual({ result: 0 });
 
     const cancel = card.commands.find((c) => c.startsWith('BF41'))!;
@@ -802,8 +807,21 @@ describe('LpaDispatcher', () => {
     expect(calls[calls.length - 1].url).toBe('https://rsp.example.com/gsma/rsp2/es9plus/cancelSession');
   });
 
+  it('preserves a safe TLS code for localized download failure guidance', async () => {
+    const card = new FakeCard(command =>
+      command.startsWith('BF2E') ? tlv('BF2E', tlv('80', '00')) : tlv('BF20', tlv('82', '020202')),
+    );
+    const http = jest.fn(async () => {
+      throw Object.assign(new Error('Secure server identity could not be verified'), {code: 'TLS_CERTIFICATE_ERROR'});
+    });
+    const bridge = new LpaDispatcher({transmit: card.transmit, http});
+    const result = await bridge.execute('authenticate_profile', ['rsp.example.com', '', '']);
+    expect(result).toMatchObject({success: false, code: 'TLS_CERTIFICATE_ERROR'});
+  });
+
   it('rejects an unknown function', async () => {
     const bridge = new LpaDispatcher({ transmit: buildCard().transmit, http: jest.fn() });
+    // @ts-expect-error Test the runtime boundary for callers outside TypeScript.
     await expect(bridge.execute('not_a_function', [])).rejects.toThrow(/Unsupported LPA function/);
   });
 });

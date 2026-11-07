@@ -1,3 +1,4 @@
+import type {LpaCommand, LpaExecutor} from '@/lpa/types/commands';
 import {Adapter, Device} from '../Adapter';
 import {Adapters} from '../registry';
 
@@ -20,7 +21,7 @@ function create() {
   };
   const dispatch = jest.fn();
   const adapter = new Adapter(device, dispatch);
-  adapter._execute = jest.fn(async () => []);
+  adapter._execute = jest.fn(async () => []) as unknown as LpaExecutor;
   return {adapter, device, dispatch};
 }
 beforeEach(() => {
@@ -51,7 +52,7 @@ test('read-only failure can recover once', async () => {
   expect(adapter._execute).toHaveBeenCalledTimes(2);
   expect(device.connect).toHaveBeenCalledTimes(1);
 });
-test.each([
+test.each<LpaCommand>([
   'delete_profile',
   'rename_profile',
   'download_profile',
@@ -70,10 +71,10 @@ test.each([
 });
 test('installation success survives failed follow-up reads', async () => {
   const {adapter} = create();
-  adapter._execute = jest.fn(async command => {
+  adapter._execute = jest.fn(async (command: LpaCommand) => {
     if (command === 'download_profile') return {success: true};
     throw Error('refresh failed');
-  });
+  }) as unknown as LpaExecutor;
   await expect(adapter.downloadProfile('session', '', () => {})).resolves.toEqual({
     success: true,
     refreshWarning: true,
@@ -94,16 +95,16 @@ test('busy switch does not publish an unexecuted expected state', async () => {
 });
 test('invalid profile response is not a valid empty card', async () => {
   const {adapter} = create();
-  adapter._execute = jest.fn(async () => null);
+  adapter._execute = jest.fn(async () => null) as unknown as LpaExecutor;
   await expect(adapter.getProfiles()).rejects.toThrow('Invalid profile response');
 });
 
 test('notification removal success survives subsequent list failure', async () => {
   const {adapter} = create();
-  adapter._execute = jest.fn(async command => {
+  adapter._execute = jest.fn(async (command: LpaCommand) => {
     if (command === 'delete_notification_single') return {result: 0};
     throw Error('read failed');
-  });
+  }) as unknown as LpaExecutor;
   expect(await adapter.deleteNotification(7)).toEqual({refreshWarning: true});
   expect(
     (adapter._execute as jest.Mock).mock.calls.filter(

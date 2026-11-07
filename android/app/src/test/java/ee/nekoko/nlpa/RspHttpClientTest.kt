@@ -1,5 +1,7 @@
 package ee.nekoko.nlpa
 
+import java.util.Date
+import java.security.cert.CertificateException
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
@@ -41,13 +43,13 @@ class RspHttpClientTest {
         assertEquals("ok:{}", request(it.url("/").toString(), trustedClient()))
     }
     @Test fun wrongHostnameFails() = server(leaf("wrong.example"), MockResponse().setBody("{}")) {
-        assertEquals("NETWORK_ERROR", request(it.url("/").toString(), trustedClient()))
+        assertEquals("TLS_CERTIFICATE_ERROR", request(it.url("/").toString(), trustedClient()))
     }
     @Test fun expiredCertificateFails() = server(leaf(expired = true), MockResponse().setBody("{}")) {
-        assertEquals("NETWORK_ERROR", request(it.url("/").toString(), trustedClient()))
+        assertEquals("TLS_CERTIFICATE_ERROR", request(it.url("/").toString(), trustedClient()))
     }
     @Test fun untrustedCertificateFailsWithProductionTrust() = server(leaf(), MockResponse().setBody("{}")) {
-        assertEquals("NETWORK_ERROR", request(it.url("/").toString(), RspHttpClient.createClient(RspHttpClient.productionTrustManager())))
+        assertEquals("TLS_CERTIFICATE_ERROR", request(it.url("/").toString(), RspHttpClient.createClient(RspHttpClient.productionTrustManager())))
     }
     @Test fun truncatedBodySettlesAsError() = server(leaf(), MockResponse().setBody("x".repeat(8192)).setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)) {
         assertEquals("RESPONSE_ERROR", request(it.url("/").toString(), trustedClient()))
@@ -67,5 +69,33 @@ class RspHttpClientTest {
         val subjects = RspHttpClient.productionTrustManager().acceptedIssuers.map { it.subjectX500Principal.name }
         assertTrue(subjects.any { it.contains("GSM Association - RSP2 Root CI1") })
         // G+D compatibility root expires 2027-05-10 and is then deliberately omitted.
+    }
+    @Test fun cachedTrustRejectsAnchorAfterExpiryEvenWhenServerOmitsRoot() {
+        val start = System.currentTimeMillis()
+        val root = HeldCertificate.Builder().certificateAuthority(1).commonName("Short lived CA")
+            .validityInterval(start - 60000L, start + 60000L).build()
+        val cert = HeldCertificate.Builder().commonName("localhost").signedBy(root)
+            .validityInterval(start - 60000L, start + 3600000L).build().certificate
+        val unrelatedSystem = HandshakeCertificates.Builder().addTrustedCertificate(ca.certificate).build().trustManager
+        var clock = Date(start)
+        val trust = RspHttpClient.trustManager(unrelatedSystem, listOf(root.certificate)) { clock }
+        trust.checkServerTrusted(arrayOf(cert), "EC")
+        clock = Date(start + 120000L)
+        assertFalse(trust.acceptedIssuers.contains(root.certificate))
+        try {
+            trust.checkServerTrusted(arrayOf(cert), "EC")
+            fail("Expired compatibility root must not authorize new handshakes")
+        } catch (_: CertificateException) { }
+    }
+
+    @Test fun expiredCompatibilityRootDoesNotDisableOtherRootsOrSystemTrust() {
+        val expired = HeldCertificate.Builder().certificateAuthority(1).commonName("Expired CA")
+            .validityInterval(0L, 1000L).build().certificate
+        val trusted = HandshakeCertificates.Builder().addTrustedCertificate(ca.certificate).build().trustManager
+        val chain = arrayOf(leaf().certificate)
+        RspHttpClient.trustManager(trusted, listOf(expired)).checkServerTrusted(chain, "EC")
+        val unrelated = HeldCertificate.Builder().certificateAuthority(1).commonName("Unrelated CA").build()
+        val system = HandshakeCertificates.Builder().addTrustedCertificate(unrelated.certificate).build().trustManager
+        RspHttpClient.trustManager(system, listOf(expired, ca.certificate)).checkServerTrusted(chain, "EC")
     }
 }

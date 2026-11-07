@@ -1,62 +1,60 @@
+import {useTranslation} from 'react-i18next';
+import {Button, Text} from 'tamagui';
+import Screen from '@/shared/ui/Screen';
+import type {AuthenticationResult} from '@/lpa/types/commands';
+import type {DownloadResult} from '@/lpa/types/operations';
 import React, {useState} from 'react';
 import type {RootScreenProps} from '@/app/navigation/types';
 import {ScannerInitial} from '@/features/download/ScannerInitial';
 import {ScannerAuthentication} from '@/features/download/ScannerAuthentication';
 import {ScannerResult} from '@/features/download/ScannerResult';
-import {Adapters} from '@/lpa/adapters/registry';
-import {useSelector} from 'react-redux';
 import {View} from 'react-native';
-import {selectDeviceState} from '@/store';
 
 function Scanner({route, navigation}: RootScreenProps<'Scanner'>) {
   const {deviceId, appLink} = route.params;
+  const {t} = useTranslation(['main']);
 
-  // Hooks must run unconditionally; an empty deviceId simply selects nothing.
-  const DeviceState = useSelector(selectDeviceState(deviceId ?? ''));
   const [scanState, setScanState] = useState(0);
-  const [authenticateResult, setAuthenticateResult] = useState(null);
-  const [downloadResult, setDownloadResult] = useState(null);
+  const [authenticateResult, setAuthenticateResult] = useState<AuthenticationResult | null>(null);
+  const [downloadResult, setDownloadResult] = useState<DownloadResult | null>(null);
   const [confirmationCode, setConfirmationCode] = useState('');
-  const [, setSmdpAddress] = useState('');
-  const adapter = deviceId ? Adapters[deviceId] : null;
 
   return (
     <View style={{flex: 1}}>
-      {scanState === 0 && (
+      {!deviceId && (
+        <Screen title={t('main:download_profile')}>
+          <Text color="$textDefault">{t('main:no_device')}</Text>
+          <Button onPress={() => navigation.goBack()}>{t('main:go_back')}</Button>
+        </Screen>
+      )}
+      {scanState === 0 && deviceId && (
         <ScannerInitial
           appLink={appLink}
-          adapter={adapter}
           deviceId={deviceId}
-          finishAuthenticate={({authenticateResult, smdp, confirmationCode}: any) => {
+          finishAuthenticate={({authenticateResult, confirmationCode}) => {
             setAuthenticateResult(authenticateResult);
-            setSmdpAddress(smdp);
             setConfirmationCode(confirmationCode);
             setScanState(1);
           }}
         />
       )}
-      {scanState === 1 && (
+      {scanState === 1 && deviceId && authenticateResult && (
         <ScannerAuthentication
-          eUICC={DeviceState}
-          adapter={adapter}
           deviceId={deviceId}
           initialConfirmationCode={confirmationCode}
           authenticateResult={authenticateResult}
           goBack={() => {
             setScanState(0);
           }}
-          confirmDownload={({downloadResult}: any) => {
+          confirmDownload={({downloadResult}) => {
             setDownloadResult(downloadResult);
             setScanState(3);
           }}
         />
       )}
-      {scanState === 3 && (
+      {scanState === 3 && deviceId && authenticateResult?.success && downloadResult && (
         <ScannerResult
-          eUICC={DeviceState}
-          adapter={adapter}
           deviceId={deviceId}
-          initialConfirmationCode={confirmationCode}
           authenticateResult={authenticateResult}
           downloadResult={downloadResult}
           goBack={() => {

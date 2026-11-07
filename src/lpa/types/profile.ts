@@ -29,20 +29,12 @@ export type Profile = ProfileMetadataMap;
 
 /** Error returned by the SM-DP+ during authenticate/download. */
 export interface RemoteError {
+  code?: string;
   status?: string;
   message?: string;
   reasonCode?: string;
   subjectCode?: string;
 }
 
-export interface AuthenticateResult {
-  remoteError: RemoteError;
-  isCcRequired: boolean;
-  profileMetadata: ProfileMetadataMap;
-  success: boolean;
-}
-
-export interface DownloadResult {
-  remoteError: RemoteError;
-  success: boolean;
-}
+export type {AuthenticationResult as AuthenticateResult} from './commands';
+export type {DownloadResult} from './operations';

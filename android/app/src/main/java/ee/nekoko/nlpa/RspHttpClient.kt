@@ -5,7 +5,9 @@ import java.security.KeyStore
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import java.util.Date
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
@@ -29,22 +31,36 @@ internal object RspHttpClient {
         }.trustManagers.filterIsInstance<X509TrustManager>().single()
 
     internal fun productionTrustManager(): X509TrustManager {
-        val roots = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null) }
         val factory = CertificateFactory.getInstance("X.509")
-        for (name in listOf("gsma-ci", "gd-smdp")) {
-            val certificate = RspHttpClient::class.java.getResourceAsStream("/rsp/$name.pem")
+        val roots = listOf("gsma-ci", "gd-smdp").map { name ->
+            RspHttpClient::class.java.getResourceAsStream("/rsp/$name.pem")
                 ?.use { factory.generateCertificate(it) as X509Certificate }
                 ?: throw IllegalStateException("Missing RSP trust root")
-            // Expired compatibility roots must stop authorizing connections.
-            try {
-                certificate.checkValidity()
-                roots.setCertificateEntry(name, certificate)
-            } catch (_: CertificateException) { }
         }
-        val delegates = listOf(manager(null), manager(roots))
+        return trustManager(manager(null), roots)
+    }
+
+    /** Check each compatibility anchor on every handshake, even if the server omits it.
+     * Separate stores prevent an expired anchor from disabling an unrelated valid root.
+     * The platform trust store remains independent and can supply replacement chains.
+     */
+    internal fun trustManager(
+        system: X509TrustManager,
+        roots: List<X509Certificate>,
+        now: () -> Date = { Date() },
+    ): X509TrustManager {
+        val delegates = roots.map { root ->
+            val store = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+                load(null)
+                setCertificateEntry("root", root)
+            }
+            root to manager(store)
+        }
         return object : X509TrustManager {
             override fun getAcceptedIssuers(): Array<X509Certificate> =
-                delegates.flatMap { it.acceptedIssuers.toList() }.toTypedArray()
+                (system.acceptedIssuers.toList() + roots.filter { root ->
+                    try { root.checkValidity(now()); true } catch (_: CertificateException) { false }
+                }).toTypedArray()
 
             override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
                 throw CertificateException("Client certificates are not supported")
@@ -52,9 +68,15 @@ internal object RspHttpClient {
 
             override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
                 if (chain.isEmpty()) throw CertificateException("Empty server certificate chain")
-                chain.forEach { it.checkValidity() }
-                for (delegate in delegates) {
+                val date = now()
+                chain.forEach { it.checkValidity(date) }
+                try {
+                    system.checkServerTrusted(chain, authType)
+                    return
+                } catch (_: CertificateException) { }
+                for ((root, delegate) in delegates) {
                     try {
+                        root.checkValidity(date)
                         delegate.checkServerTrusted(chain, authType)
                         return
                     } catch (_: CertificateException) { }
@@ -98,7 +120,11 @@ internal object RspHttpClient {
             (http ?: client).newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     // Exception text may contain activation IDs or server URLs.
-                    reject("NETWORK_ERROR", "Secure request failed or timed out")
+                    if (e is SSLException) {
+                        reject("TLS_CERTIFICATE_ERROR", "Secure server identity could not be verified")
+                    } else {
+                        reject("NETWORK_ERROR", "Secure request failed or timed out")
+                    }
                 }
 
                 override fun onResponse(call: Call, response: Response) {

@@ -269,5 +269,15 @@
   "notifications_operation_enable": "Enable",
   "notifications_operation_install": "Install",
   "notifications_operation_unknown": "Profile change",
-  "profile_save": "Save"
+  "profile_save": "Save",
+  "profile_conf_code_placeholder": "Enter confirmation code",
+  "profile_download_failure_body": "The profile could not be downloaded. Review the error before trying again.",
+  "error_message_label": "Error message",
+  "error_status_label": "Status",
+  "error_reason_label": "Reason code",
+  "error_subject_label": "Subject code",
+  "error_tls_hint": "The secure connection could not be verified. Check the device date and time and update QianLesim. If it persists, contact the provider; its certificate chain may need renewal.",
+  "discovery_found": "SM-DP+ found.",
+  "discovery_empty": "No server found.",
+  "discovery_multiple": "Multiple SM-DP+ servers found; the first is selected."
 }
