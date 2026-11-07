@@ -141,6 +141,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // OkHttp 4.x is binary-compatible with Okio 3.x; 2.9.0 is affected by CVE-2023-3635.
+    implementation("com.squareup.okio:okio:3.6.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

@@ -131,3 +131,9 @@
 已按用户要求处理依赖、发布来源、类型/中文/权限，排除 iOS；G+D 续期上游暂缺，新增安全生命周期处理。TypeScript、23 套件 167 项 Jest 通过；npm 957 个包名复扫仅 deepmerge 4.3.1 的已补丁命中，补丁字节和行为验证通过。尚未将这些本地结果记为 Android 构建、Maven 扫描或真机通过；待当前 CI 生成记录。
 
 首轮 [42323623768](https://github.com/meetjor/NekokoLPA/actions/runs/42323623768) 的 TypeScript/167 Jest/npm 审计通过；Gradle init 脚本也被应用到 RN 附属插件构建，因不存在 :app 而失败。已添加项目筛选与未解析依赖拒绝规则，并显式重跑 postinstall 保证缓存恢复后补丁生效。此次未生成/发布 APK，不改变版本号。
+
+第二轮 [42323941504](https://github.com/meetjor/NekokoLPA/actions/runs/42323941504) 成功解析 156 项 Android Maven 依赖，OSV 检出 Okio 2.9.0 / CVE-2023-3635，按关卡设计阻止发布。定向使用与 Okio 2.x JVM API 二进制兼容的 3.6.0，并加入畸形 GZIP FEXTRA 无符号长度回归；待下一轮验证实际解析版本。未回避或忽略该公告。
+
+Okio 3.6.0 与 okio-jvm 的 OSV 查询均无命中。Android 集成与 TLS 测试仍由下一轮 CI 确认。
+
+已完成隔离回归：同一 Java 字节码（以旧 Okio 编译）和同一合成 GZIP，Okio 2.9.0 抛 IllegalArgumentException，3.6.0 抛预期 EOFException。验证新版二进制兼容及该异常修复；不替代 Android 集成检查。

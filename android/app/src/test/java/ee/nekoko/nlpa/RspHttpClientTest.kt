@@ -1,5 +1,8 @@
 package ee.nekoko.nlpa
 
+import java.io.IOException
+import okio.Buffer
+import okio.GzipSource
 import java.util.Date
 import java.security.cert.CertificateException
 import java.util.concurrent.LinkedBlockingQueue
@@ -97,5 +100,13 @@ class RspHttpClientTest {
         val unrelated = HeldCertificate.Builder().certificateAuthority(1).commonName("Unrelated CA").build()
         val system = HandshakeCertificates.Builder().addTrustedCertificate(unrelated.certificate).build().trustManager
         RspHttpClient.trustManager(system, listOf(expired, ca.certificate)).checkServerTrusted(chain, "EC")
+    }
+    @Test fun malformedGzipExtraLengthFailsAsIoError() {
+        // GZIP FEXTRA with unsigned XLEN=32768 and missing payload.
+        // Vulnerable Okio 2.x treats XLEN as negative and leaks IllegalArgumentException.
+        val bytes = "1f8b08040000000000ff0080".chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        GzipSource(Buffer().write(bytes)).use { source ->
+            assertThrows(IOException::class.java) { source.read(Buffer(), 1L) }
+        }
     }
 }
