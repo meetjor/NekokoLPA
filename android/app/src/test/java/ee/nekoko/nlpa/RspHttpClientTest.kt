@@ -24,7 +24,10 @@ class RspHttpClientTest {
         return builder.build()
     }
     private fun trustedClient(): OkHttpClient = RspHttpClient.createClient(
-        HandshakeCertificates.Builder().addTrustedCertificate(ca.certificate).build().trustManager
+        RspHttpClient.trustManager(
+            HandshakeCertificates.Builder().addPlatformTrustedCertificates().build().trustManager,
+            listOf(ca.certificate),
+        )
     )
     private fun request(url: String, client: OkHttpClient): String {
         val events = LinkedBlockingQueue<String>()
@@ -82,11 +85,11 @@ class RspHttpClientTest {
         val unrelatedSystem = HandshakeCertificates.Builder().addTrustedCertificate(ca.certificate).build().trustManager
         var clock = Date(start)
         val trust = RspHttpClient.trustManager(unrelatedSystem, listOf(root.certificate)) { clock }
-        trust.checkServerTrusted(arrayOf(cert), "EC")
+        trust.checkServerTrusted(arrayOf(cert), "ECDHE_ECDSA")
         clock = Date(start + 120000L)
         assertFalse(trust.acceptedIssuers.contains(root.certificate))
         try {
-            trust.checkServerTrusted(arrayOf(cert), "EC")
+            trust.checkServerTrusted(arrayOf(cert), "ECDHE_ECDSA")
             fail("Expired compatibility root must not authorize new handshakes")
         } catch (_: CertificateException) { }
     }
@@ -96,10 +99,10 @@ class RspHttpClientTest {
             .validityInterval(0L, 1000L).build().certificate
         val trusted = HandshakeCertificates.Builder().addTrustedCertificate(ca.certificate).build().trustManager
         val chain = arrayOf(leaf().certificate)
-        RspHttpClient.trustManager(trusted, listOf(expired)).checkServerTrusted(chain, "EC")
+        RspHttpClient.trustManager(trusted, listOf(expired)).checkServerTrusted(chain, "ECDHE_ECDSA")
         val unrelated = HeldCertificate.Builder().certificateAuthority(1).commonName("Unrelated CA").build()
         val system = HandshakeCertificates.Builder().addTrustedCertificate(unrelated.certificate).build().trustManager
-        RspHttpClient.trustManager(system, listOf(expired, ca.certificate)).checkServerTrusted(chain, "EC")
+        RspHttpClient.trustManager(system, listOf(expired, ca.certificate)).checkServerTrusted(chain, "ECDHE_ECDSA")
     }
     @Test fun malformedGzipExtraLengthFailsAsIoError() {
         // GZIP FEXTRA with unsigned XLEN=32768 and missing payload.

@@ -137,3 +137,5 @@
 Okio 3.6.0 与 okio-jvm 的 OSV 查询均无命中。Android 集成与 TLS 测试仍由下一轮 CI 确认。
 
 已完成隔离回归：同一 Java 字节码（以旧 Okio 编译）和同一合成 GZIP，Okio 2.9.0 抛 IllegalArgumentException，3.6.0 抛预期 EOFException。验证新版二进制兼容及该异常修复；不替代 Android 集成检查。
+
+第三轮 [42346213364](https://github.com/meetjor/NekokoLPA/actions/runs/42346213364) npm/Maven 扫描通过，原生编译完成，12 项测试中新增的 2 项根有效期测试失败：测试直接调用 JDK TrustManager 时传入了不支持的认证类型 EC。隔离 Java 程序确认 EC 返回 Unknown authType，而 ECDHE_ECDSA 正常接受同一有效链；修正测试参数，同时让 HTTPS 成功/错误测试通过实际组合信任管理器。两份 Kotlin 源文件在本地 JVM 编译并运行全部 12 项测试通过；待 CI 集成/正式 APK。测试没有放宽证书校验或改为伪造信任结果。

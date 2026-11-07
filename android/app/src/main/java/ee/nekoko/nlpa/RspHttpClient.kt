@@ -40,7 +40,7 @@ internal object RspHttpClient {
         return trustManager(manager(null), roots)
     }
 
-    /** Check each compatibility anchor on every handshake, even if the server omits it.
+    /** Check each compatibility anchor on every server-chain validation, even if the server omits it.
      * Separate stores prevent an expired anchor from disabling an unrelated valid root.
      * The platform trust store remains independent and can supply replacement chains.
      */
