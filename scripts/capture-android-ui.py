@@ -161,7 +161,12 @@ def update_checks(name):
         time.sleep(1)
     assert 'com.android.chrome' in resumed, 'Release page did not open in external browser: ' + resumed
     (OUT / (name + '-browser.txt')).write_text(resumed)
-    adb('shell', 'am', 'start', '-W', '-n', f'{PACKAGE}/ee.nekoko.nlpa.MainActivity')
+    # A fresh emulator's Chrome may launch FirstRunActivity after Main resumes,
+    # stealing focus while am start -W waits for our existing singleTask activity.
+    # Browser dispatch is verified above. Close only the disposable browser;
+    # keep QianLesim alive so its failed-check state and retry path are tested.
+    adb('shell', 'am', 'force-stop', 'com.android.chrome')
+    adb('shell', 'am', 'start', '-n', f'{PACKAGE}/ee.nekoko.nlpa.MainActivity')
     await_text('检查更新失败')
     tap_id('check-app-update')
     await_text('发现新版本 9.9.9')

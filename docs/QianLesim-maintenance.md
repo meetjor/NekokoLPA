@@ -163,3 +163,10 @@ TypeScript、25 套件 181 项 Jest 与定向 ESLint 通过；新增真实模拟
 [43569587575](https://github.com/meetjor/NekokoLPA/actions/runs/43569587575) 已完成 ARM64 编译、原生 12 项测试、三签；Android 15 实际拖动检查失败，发布跳过，未创建 1.1.5 Release。日志显示 DraggableFlatList 并发渲染恢复警告；源码确认组件 4.0.3 仍在排序数据变化时调用 RN 0.88 已移除的 InteractionManager。补丁改为提交后的 useLayoutEffect 重置，避免渲染期间更新历史数据引用；对源文件、ESM/CJS 三入口生成并验证补丁。UI 检查直接读取名称节点并保留前后截图/层次结构，继续验证实际拖动及排序持久化，不放宽断言。
 
 复核同时补齐严格隐私模式：排序页只显示运营商，不显示个人昵称；沿用昵称解析，隐藏旧顺序/标签元数据。增加 2 项回归，本地共 181 项通过。更新入口限定 QianLesim store 包，避免其他上游签名变体误用本仓库 APK；模拟器新增真实打开 Chrome 发布页检查，不下载测试 APK。版本仍为未发布的 1.1.5 / 410。
+
+
+### 2026-11-15 · 浏览器检查脚本收尾
+
+第二轮 [43593027791](https://github.com/meetjor/NekokoLPA/actions/runs/43593027791) 未发布。Android 15 深色拖动、返回取消、完成保存及进程重启保持顺序全部通过；`dark-updates-browser.txt` 与 ActivityTaskManager 日志确认实际跳到 Chrome。随后 Chrome 的 FirstRunActivity 抢回焦点，`am start -W` 返回应用命令等待 30 秒超时；最后截图停在 Chrome 欢迎页，没有 QianLesim 崩溃证据。
+
+调整仅限测试脚本：外部浏览器断言通过后 force-stop 模拟器 Chrome，保留 QianLesim 进程，以非阻塞启动加实际 UI 等待恢复设置页，继续检查原失败状态和成功重试。无需登录浏览器、接受引导或下载模拟 APK。正式应用代码、签名和版本不变；后续仍须 Android 14/15 完整门禁通过。
