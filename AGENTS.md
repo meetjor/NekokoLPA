@@ -2,7 +2,7 @@
 
 本文件是本仓库的开发入口，适用于 Work、Codex 及后续开发者。以实际源码、Git 历史、Actions、Release 和用户最新反馈恢复状态，不依赖聊天记忆，也不要从零重建项目。
 
-最后更新：2026-11-07。当前维护分支：`feature/qianlesim-v1`。
+最后更新：2026-11-13。当前维护分支：`feature/qianlesim-v1`。
 
 ## 1. 每次接管先做什么
 
@@ -160,3 +160,13 @@ bash gradlew assembleRelease --no-daemon --build-cache -PreactNativeArchitecture
 G+D 根上游仍为 2027-05-10 到期证书；仅能补有效期隔离、中文失败提示、构建阈值检查和审查更新流程，不能宣称已续期。当前来源/版本清单见 docs/security/rsp-roots.json。CI 固定 Actions SHA 并要求最终 APK 来源证明通过后发布；公开三签不变。新增 patches、scripts/security、docs/security 改动会触发构建，因此后续纯状态文档尽量写入发布/维护记录，避免重复同版本构建。
 
 最终核验：957 个 npm 包名仅 deepmerge 已本地补丁命中，157 项 Android Maven 依赖无公告命中；12 项原生测试通过。发布 APK 独立验签/哈希与来源证明的 subject 一致。用户已反馈本版真机没问题，未提供逐项硬件/运营商测试记录。证据见 [发布核验](docs/releases/1.1.4-verification.md)。此次收尾只改文档，不触发重复构建。
+
+## 15. 1.1.5 排序与更新（实现中）
+
+用户批准：隐藏设置中固定“状态同步”说明；应用内检查本仓库三签新版本并由外部浏览器下载；每张 eUICC 独立保存拖动排序。版本 1.1.5 / 410，沿用原包名/三签。正常切换及卡片同步中/未确认提示保持不变。
+
+排序以 EID 分区，ICCID 为本地排序键，不改卡内/Redux 顺序，不发送写卡指令；新配置追加，删除配置过滤；完成保存，返回取消，另有无障碍上下移动按钮。没有可靠 EID 不提供排序，断连/换卡/状态未确认时禁止保存。
+
+启动检查可在关于页关闭，仅访问公开 Releases API，不上传卡信息，不下载或安装 APK；存活进程内自动检查至少间隔 24 小时，手动检查不受此限。只接受 meetjor/NekokoLPA 的 vX.Y.Z-qianlesim-3sign 与完整 ARM64 资产，包括现有预发布渠道。原生浏览器 selector 避免 GitHub App Links 接管下载，无内置下载器/静默安装权限。
+
+本地 TypeScript、25 套件 179 项 Jest、定向 ESLint 已通过；当前仍需 CI 原生编译/拖动与更新 UI/签名/发布核验，不能将 1.1.4 的真机反馈写成本版通过。见 docs/releases/1.1.5.md。合成 UI 仅注入已签名上传之后的非发布 x86_64 构建。

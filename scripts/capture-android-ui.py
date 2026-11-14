@@ -96,6 +96,69 @@ def notification_checks(name):
     adb('shell', 'input', 'keyevent', '4')
     await_text('QianLesim')
 
+def node_id(identifier):
+    for node in ET.fromstring(hierarchy()).iter('node'):
+        if node.get('resource-id', '').split('/')[-1] == identifier:
+            return node
+    raise RuntimeError(f'UI node missing: {identifier}')
+
+def sort_first_text():
+    return ' '.join(node.get('text', '') for node in node_id('sort-row-0').iter('node'))
+
+def sort_checks(name):
+    tap_id('profile-sort')
+    await_text('长按手柄拖动')
+    before = sort_first_text()
+    # Exercise actual gesture handling, including Reanimated compatibility.
+    x1, y1, x2, y2 = bounds(node_id('sort-handle-0'))
+    tx1, ty1, tx2, ty2 = bounds(node_id('sort-handle-1'))
+    x, y, end_y = (x1+x2)//2, (y1+y2)//2, (ty1+ty2)//2
+    adb('shell', 'input', 'motionevent', 'DOWN', str(x), str(y))
+    time.sleep(0.4)
+    for step in range(1, 9):
+        adb('shell', 'input', 'motionevent', 'MOVE', str(x), str(y+(end_y-y)*step//8))
+        time.sleep(0.06)
+    adb('shell', 'input', 'motionevent', 'UP', str(x), str(end_y))
+    time.sleep(1)
+    assert sort_first_text() != before, 'Drag did not reorder profiles'
+    screenshot(name + '-drag')
+    # Back cancels the draft.
+    adb('shell', 'input', 'keyevent', '4')
+    tap_id('profile-sort')
+    assert sort_first_text() == before, 'Back unexpectedly saved draft order'
+    tap_id('sort-down-0')
+    after = sort_first_text()
+    assert after != before, 'Arrow did not reorder profiles'
+    tap_id('sort-save')
+    tap_id('profile-sort')
+    assert sort_first_text() == after, 'Saved order did not persist on reopen'
+    screenshot(name + '-saved')
+    adb('shell', 'input', 'keyevent', '4')
+    # Process restart retains the order in MMKV; the fixture republishes chip order.
+    launch()
+    adb('shell', 'input', 'keyevent', '4')
+    await_text('QianLesim')
+    tap_id('profile-sort')
+    assert sort_first_text() == after, 'Saved order lost after process restart/card refresh'
+    adb('shell', 'input', 'keyevent', '4')
+
+def update_checks(name):
+    tap_id('check-app-update', scroll=True)
+    await_text('检查更新失败')
+    screenshot(name + '-failed')
+    tap_id('check-app-update')
+    await_text('发现新版本 9.9.9')
+    # Reveal but never click the synthetic APK download action.
+    for _ in range(4):
+        xml = hierarchy()
+        if '浏览器下载 APK' in xml and 'UI 测试更新说明' in xml:
+            break
+        adb('shell', 'input', 'swipe', '540', '2000', '540', '1200', '350')
+    assert 'UI 测试更新说明' in xml
+    assert '浏览器下载 APK' in xml
+    assert '状态同步' not in xml
+    screenshot(name + '-available')
+
 try:
     adb('shell', 'wm', 'size', '1080x2400')
     adb('shell', 'wm', 'density', '420')
@@ -104,10 +167,12 @@ try:
         adb('shell', 'cmd', 'uimode', 'night', 'yes' if mode == 'dark' else 'no')
         launch()
         if FIXTURE: notification_checks(f'{mode}-notifications-fixture')
+        if FIXTURE: sort_checks(f'{mode}-profile-order')
         screenshot(f'{mode}-home-no-euicc')
         open_settings()
         await_text('通用' if FIXTURE else 'General')
         screenshot(f'{mode}-settings')
+        if FIXTURE: update_checks(f'{mode}-updates')
     adb('shell', 'cmd', 'uimode', 'night', 'yes')
     adb('shell', 'settings', 'put', 'system', 'font_scale', '1.3')
     launch()

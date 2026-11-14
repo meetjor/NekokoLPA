@@ -83,6 +83,27 @@ class NekokoLPA(reactContext: ReactApplicationContext) : NativeNekokoLPASpec(rea
 
     private val reactApplicationContext: ReactApplicationContext = reactContext
 
+    override fun openUpdateBrowser(url: String, promise: Promise) {
+        val allowed = url == "https://github.com/meetjor/NekokoLPA/releases" ||
+            Regex("^https://github\\.com/meetjor/NekokoLPA/releases/download/v([0-9]+\\.[0-9]+\\.[0-9]+)-qianlesim-3sign/QianLesim-v\\1-arm64\\.apk$").matches(url)
+        if (!allowed) {
+            promise.reject("INVALID_UPDATE_URL", "Unsupported update URL")
+            return
+        }
+        try {
+            // Resolve a browser independently of GitHub App Links, but deliver
+            // the original ACTION_VIEW URL to that browser. No package queries.
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+                selector = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_BROWSER)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+            promise.resolve(true)
+        } catch (_: Exception) {
+            promise.reject("BROWSER_UNAVAILABLE", "Unable to open external browser")
+        }
+    }
+
     // OMAPIBridge state
     var aidListDefault = "A06573746B6D65FFFFFFFF4953442D52,A0000005591010FFFFFFFF8900000100,A0000005591010FFFFFFFF8900050500,A0000005591010000000008900000300,A0000005591010FFFFFFFF8900000177"
     private var seService: SEService = SEService(reactContext as Context, { obj: Runnable -> obj.run() }, {})

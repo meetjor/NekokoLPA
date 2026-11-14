@@ -15,6 +15,8 @@ import {selectDeviceState} from '@/store';
 import {ProfileRow} from '@/features/main/ProfileRow';
 import {FlatList} from 'react-native-gesture-handler';
 import {useLoading} from '@/app/providers/LoadingProvider';
+import {useProfileOrder} from '@/shared/hooks/useProfileOrder';
+import {orderProfiles} from '@/shared/utils/profileOrder';
 
 export default function ProfileSelector({deviceId}: {deviceId: string}) {
   const theme = useTheme();
@@ -24,16 +26,17 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
   const [refreshing, setRefreshing] = useState(false);
   const {isLoading} = useLoading();
   const adapter = Adapters[deviceId];
+  const {order, key: orderKey} = useProfileOrder(DeviceState.eid);
 
   const profiles = useMemo(() => {
     const profileList = DeviceState.profiles;
     if (!profileList?.map) return [];
 
-    return profileList.map((profile: Profile) => ({
+    return orderProfiles(profileList, order).map((profile: Profile) => ({
       ...profile,
       selected: profile.profileState === 1,
     }));
-  }, [DeviceState.profiles]);
+  }, [DeviceState.profiles, order]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -95,6 +98,12 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
         <>
           <ProfileCardHeader deviceId={deviceId} />
           {DeviceState.refreshError && <Text color="$statusWarning" marginBottom={12}>{t('ui_refresh_failed')}</Text>}
+          {profiles.length > 1 && orderKey && <TouchableOpacity testID="profile-sort" accessibilityRole="button"
+            disabled={isLoading || DeviceState.switchSyncing || DeviceState.refreshError}
+            onPress={() => navigation.navigate('ProfileOrder', {deviceId, eid: DeviceState.eid})}
+            style={{minHeight: 48, justifyContent: 'center', alignSelf: 'flex-end'}}>
+            <Text color="$primaryColor">{t('ui_sort_profiles')}</Text>
+          </TouchableOpacity>}
           <XStack alignItems="center" justifyContent="space-between" gap={8} marginBottom={12}>
             <Text color="$textDefault" fontSize={18} fontWeight="600" flex={1}>
               {t('ui_installed_profiles', {count: profiles.length})}

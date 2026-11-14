@@ -2,6 +2,8 @@ import type {TurboModule} from 'react-native';
 import {TurboModuleRegistry} from 'react-native';
 
 export interface Spec extends TurboModule {
+  // External browser only; never an embedded downloader or silent installer.
+  openUpdateBrowser(url: string): Promise<boolean>;
   // OMAPIBridge methods
   openSTK(device: string): void;
   listDevices(aidList: string): Promise<string>;

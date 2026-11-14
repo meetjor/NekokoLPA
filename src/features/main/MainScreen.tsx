@@ -9,6 +9,7 @@ import type {RootScreenProps} from '@/app/navigation/types';
 import {setupDevices} from '@/lpa/deviceManager';
 import AppHeader from '@/features/main/components/AppHeader';
 import ActionButtons from '@/features/main/components/ActionButtons';
+import UpdateNotice from '@/features/main/components/UpdateNotice';
 
 function Main({navigation}: RootScreenProps<'Main'>) {
   const dispatch = useDispatch();
@@ -26,6 +27,7 @@ function Main({navigation}: RootScreenProps<'Main'>) {
         <YStack paddingHorizontal={20} paddingTop={16} paddingBottom={8} gap={16}>
           <AppHeader />
           <ActionButtons navigation={navigation} onRefresh={handleRefresh} />
+          <UpdateNotice />
         </YStack>
         <SIMSelector />
       </YStack>

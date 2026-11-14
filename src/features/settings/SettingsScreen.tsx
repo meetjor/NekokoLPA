@@ -15,8 +15,6 @@ import {
   Fingerprint,
   Palette,
   Image as ImageIcon,
-  RefreshCcw,
-  CheckCircle,
 } from '@tamagui/lucide-icons';
 import {isSimplifiedMode} from '@/shared/config/features';
 import {preferences} from '@/shared/storage';
@@ -31,6 +29,7 @@ import SectionLabel from '@/shared/ui/SectionLabel';
 import RowGroup, {Row} from '@/shared/ui/RowGroup';
 import {AppVersion} from '@/shared/config/app';
 import {fontFamily, fontSize, radius} from '@/shared/theme/tokens';
+import AppUpdateSection from './components/AppUpdateSection';
 
 /** Which rows belong to which section, in display order. */
 const SECTIONS = [
@@ -185,25 +184,6 @@ export default function Settings(_props: RootScreenProps<'Settings'>) {
             renderItem={renderItem}
           />
         ))}
-        <YStack gap={10} marginBottom={24}>
-          <SectionLabel>{t('main:ui_status_sync')}</SectionLabel>
-          <RowGroup>
-            <Row paddingVertical={16}>
-              <XStack alignItems="center" gap={12}>
-                <RefreshCcw size={22} color="$color6" />
-                <YStack flex={1} gap={4}>
-                  <TText color="$textDefault" fontSize={fontSize.md}>
-                    {t('main:ui_auto_refresh')}
-                  </TText>
-                  <TText color="$color6" fontSize={fontSize.xs}>
-                    {t('main:ui_auto_refresh_hint')}
-                  </TText>
-                </YStack>
-                <CheckCircle size={21} color="$backgroundSuccess" />
-              </XStack>
-            </Row>
-          </RowGroup>
-        </YStack>
         <YStack gap={10} marginBottom={16}>
           <SectionLabel>{t('main:ui_about')}</SectionLabel>
           <RowGroup>
@@ -222,6 +202,7 @@ export default function Settings(_props: RootScreenProps<'Settings'>) {
                 {t('main:ui_open_source')}
               </TText>
             </Row>
+            <AppUpdateSection />
           </RowGroup>
         </YStack>
       </YStack>

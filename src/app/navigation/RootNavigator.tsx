@@ -14,6 +14,7 @@ import Main from '@/features/main/MainScreen';
 import Scanner from '@/features/download/DownloadScreen';
 import Profile from '@/features/profile/ProfileScreen';
 import Settings from '@/features/settings/SettingsScreen';
+import ProfileOrder from '@/features/main/ProfileOrderScreen';
 import Notifications from '@/features/notifications/NotificationsScreen';
 import {useTheme} from 'tamagui';
 import {ToastProvider} from '@/app/providers/ToastProvider';
@@ -40,6 +41,7 @@ function StackNavigator() {
         },
       }}>
       <Stack.Screen name="Main" component={Main} />
+      <Stack.Screen name="ProfileOrder" component={ProfileOrder} />
       <Stack.Screen
         name="Scanner"
         component={Scanner}
