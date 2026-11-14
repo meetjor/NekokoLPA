@@ -11,8 +11,8 @@ import {Adapters} from '@/lpa/adapters/registry';
 import {useProfileOrder} from '@/shared/hooks/useProfileOrder';
 import {usePreference} from '@/shared/hooks/usePreference';
 import {preferences} from '@/shared/storage';
-import {orderProfiles, moveProfile} from '@/shared/utils/profileOrder';
-import {isRedactMode, maskProfileText} from '@/shared/utils/redact';
+import {orderProfiles, moveProfile, profileOrderLabel} from '@/shared/utils/profileOrder';
+import {isRedactMode} from '@/shared/utils/redact';
 import Screen from '@/shared/ui/Screen';
 
 export default function ProfileOrderScreen({route, navigation}: RootScreenProps<'ProfileOrder'>) {
@@ -48,12 +48,12 @@ export default function ProfileOrderScreen({route, navigation}: RootScreenProps<
       onDragEnd={({data}) => { setDraft(data.map(p => p.iccid)); setDragging(false); }}
       renderItem={({item, drag, isActive}) => {
         const index = ids.indexOf(item.iccid);
-        const label = maskProfileText(item.profileNickname || item.profileName || t('ui_profile'), isRedactMode(redact) ? redact : 'none');
+        const label = profileOrderLabel(item, isRedactMode(redact) ? redact : 'none', t('ui_profile'));
         return <YStack testID={`sort-row-${index}`} marginBottom={10} padding={12} borderRadius={14}
           backgroundColor="$surfaceRow" borderWidth={1} borderColor={isActive ? '$primaryColor' : '$borderColor'}>
           <XStack alignItems="center" gap={8}>
             <Text color="$color6">{index + 1}</Text>
-            <Text color="$textDefault" fontSize={16} flex={1} numberOfLines={2}>{label}</Text>
+            <Text testID={`sort-name-${index}`} color="$textDefault" fontSize={16} flex={1} numberOfLines={2}>{label}</Text>
             <TouchableOpacity testID={`sort-handle-${index}`} accessibilityRole="button"
               accessibilityLabel={t('ui_sort_drag', {name: label})} disabled={!valid || isActive}
               onLongPress={drag} delayLongPress={200} style={{width: 48, height: 48, alignItems: 'center', justifyContent: 'center'}}>

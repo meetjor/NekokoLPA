@@ -103,12 +103,16 @@ def node_id(identifier):
     raise RuntimeError(f'UI node missing: {identifier}')
 
 def sort_first_text():
-    return ' '.join(node.get('text', '') for node in node_id('sort-row-0').iter('node'))
+    node = node_id('sort-name-0')
+    text = node.get('text') or node.get('content-desc') or ''
+    assert text.strip(), 'Sort-name accessibility node has no text'
+    return text
 
 def sort_checks(name):
     tap_id('profile-sort')
     await_text('长按手柄拖动')
     before = sort_first_text()
+    screenshot(name + '-before')
     # Exercise actual gesture handling, including Reanimated compatibility.
     x1, y1, x2, y2 = bounds(node_id('sort-handle-0'))
     tx1, ty1, tx2, ty2 = bounds(node_id('sort-handle-1'))
@@ -146,6 +150,19 @@ def update_checks(name):
     tap_id('check-app-update', scroll=True)
     await_text('检查更新失败')
     screenshot(name + '-failed')
+    # Exercise the real Android browser bridge with the release PAGE, not a
+    # synthetic APK download. The Google APIs image includes Chrome.
+    tap_id('open-app-releases', scroll=True)
+    for _ in range(10):
+        activity = adb('shell', 'dumpsys', 'activity', 'activities').decode()
+        resumed = '\n'.join(line for line in activity.splitlines() if 'ResumedActivity' in line)
+        if 'com.android.chrome' in resumed:
+            break
+        time.sleep(1)
+    assert 'com.android.chrome' in resumed, 'Release page did not open in external browser: ' + resumed
+    (OUT / (name + '-browser.txt')).write_text(resumed)
+    adb('shell', 'am', 'start', '-W', '-n', f'{PACKAGE}/ee.nekoko.nlpa.MainActivity')
+    await_text('检查更新失败')
     tap_id('check-app-update')
     await_text('发现新版本 9.9.9')
     # Reveal but never click the synthetic APK download action.
@@ -181,6 +198,8 @@ try:
     open_settings()
     await_text('通用' if FIXTURE else 'General')
     screenshot('dark-settings-large-text')
+    assert b'error during concurrent rendering' not in adb('logcat', '-d', '-s', 'ReactNativeJS'), 'React recovered from a render error'
 finally:
     (OUT / 'last-screen.png').write_bytes(adb('exec-out', 'screencap', '-p'))
+    (OUT / 'last-screen.xml').write_text(hierarchy())
     (OUT / 'logcat.txt').write_bytes(adb('logcat', '-d', '-t', '2000'))

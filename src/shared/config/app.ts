@@ -31,6 +31,9 @@ export const AppLogo = LogoImage;
 export const AppBuyLink = config.buyLink;
 export const AppBuyLinkEsimData = config.buyLinkEsimData;
 export const AppCheckForUpdates = config.checkForUpdates;
+/** Other upstream flavours may have different package/signers and must not take this APK. */
+export const AppSupportsUpdates = config.appTitle === 'QianLesim' &&
+  config.appId === 'ee.nekoko.nlpa1' && config.flavor === 'store';
 export const GithubLink = config.githubLink;
 
 /**

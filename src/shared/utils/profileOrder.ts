@@ -1,3 +1,15 @@
+import type {ProfileMetadataMap} from '@/lpa/types/profile';
+import {parseMetadataOnly} from './parser';
+import {maskProfileText, type RedactMode} from './redact';
+
+/** Match list privacy: strict mode displays the provider, never a personal nickname. */
+export function profileOrderLabel(profile: ProfileMetadataMap, mode: RedactMode, fallback: string): string {
+  const name = mode === 'hard' || mode === 'block'
+    ? profile.serviceProviderName || fallback
+    : parseMetadataOnly(profile).name || profile.serviceProviderName || fallback;
+  return maskProfileText(name, mode);
+}
+
 /** Presentation only: never change the Redux/card profile array or write APDUs. */
 export function profileOrderKey(eid: string | undefined): string | null {
   return eid && /^\d{32}$/.test(eid) ? `profile-order.v1.${eid}` : null;

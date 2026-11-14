@@ -2,7 +2,7 @@
 
 本文件是本仓库的开发入口，适用于 Work、Codex 及后续开发者。以实际源码、Git 历史、Actions、Release 和用户最新反馈恢复状态，不依赖聊天记忆，也不要从零重建项目。
 
-最后更新：2026-11-13。当前维护分支：`feature/qianlesim-v1`。
+最后更新：2026-11-14。当前维护分支：`feature/qianlesim-v1`。
 
 ## 1. 每次接管先做什么
 
@@ -169,4 +169,6 @@ G+D 根上游仍为 2027-05-10 到期证书；仅能补有效期隔离、中文�
 
 启动检查可在关于页关闭，仅访问公开 Releases API，不上传卡信息，不下载或安装 APK；存活进程内自动检查至少间隔 24 小时，手动检查不受此限。只接受 meetjor/NekokoLPA 的 vX.Y.Z-qianlesim-3sign 与完整 ARM64 资产，包括现有预发布渠道。原生浏览器 selector 避免 GitHub App Links 接管下载，无内置下载器/静默安装权限。
 
-本地 TypeScript、25 套件 179 项 Jest、定向 ESLint 已通过；当前仍需 CI 原生编译/拖动与更新 UI/签名/发布核验，不能将 1.1.4 的真机反馈写成本版通过。见 docs/releases/1.1.5.md。合成 UI 仅注入已签名上传之后的非发布 x86_64 构建。
+本地 TypeScript、25 套件 181 项 Jest、定向 ESLint 已通过；当前仍需 CI 原生编译/拖动与更新 UI/签名/发布核验，不能将 1.1.4 的真机反馈写成本版通过。见 docs/releases/1.1.5.md。合成 UI 仅注入已签名上传之后的非发布 x86_64 构建。
+
+1.1.5 首轮 ARM64/原生测试/三签通过，UI 拖动检查失败而未发布。新增 `patches/react-native-draggable-flatlist+4.0.3.patch` 处理 RN 0.88 移除 InteractionManager；本轮同时补严格隐私昵称遮罩。保留补丁，下一轮必须通过真实拖动与浏览器桥接检查。

@@ -2,7 +2,7 @@ import React from 'react';
 import {Alert, Platform, TouchableOpacity} from 'react-native';
 import {Text, XStack, YStack} from 'tamagui';
 import {useTranslation} from 'react-i18next';
-import {AppVersion} from '@/shared/config/app';
+import {AppVersion, AppSupportsUpdates} from '@/shared/config/app';
 import {usePreference} from '@/shared/hooks/usePreference';
 import {useAppUpdate, checkAppUpdate} from '@/shared/hooks/useAppUpdate';
 import {preferences} from '@/shared/storage';
@@ -15,7 +15,7 @@ export default function AppUpdateSection() {
   const {t} = useTranslation('main');
   const automatic = usePreference('automaticAppUpdates', 'on') === 'on';
   const state = useAppUpdate();
-  if (Platform.OS !== 'android') return null;
+  if (Platform.OS !== 'android' || !AppSupportsUpdates) return null;
   const release = state.release;
   const newer = release && isNewerVersion(release.version, AppVersion);
   const open = async (url: string) => {
@@ -31,7 +31,7 @@ export default function AppUpdateSection() {
       </TouchableOpacity>
       {state.status === 'error' && <YStack gap={8}>
         <Text color="$statusWarning">{t('ui_update_failed')}</Text>
-        <TouchableOpacity accessibilityRole="button" onPress={() => { void open(RELEASES_PAGE); }} style={{minHeight: 48, justifyContent: 'center'}}>
+        <TouchableOpacity testID="open-app-releases" accessibilityRole="button" onPress={() => { void open(RELEASES_PAGE); }} style={{minHeight: 48, justifyContent: 'center'}}>
           <Text color="$primaryColor">{t('ui_open_releases')}</Text>
         </TouchableOpacity>
       </YStack>}
