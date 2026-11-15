@@ -24,7 +24,7 @@ function Main({navigation}: RootScreenProps<'Main'>) {
         width="100%"
         maxWidth={800}
         alignSelf="center">
-        <YStack paddingHorizontal={20} paddingTop={16} paddingBottom={8} gap={16}>
+        <YStack paddingHorizontal={20} paddingTop={16} paddingBottom={4} gap={14}>
           <AppHeader />
           <ActionButtons navigation={navigation} onRefresh={handleRefresh} />
           <UpdateNotice />

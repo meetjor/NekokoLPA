@@ -1,6 +1,6 @@
 import {Text, XStack, YStack, View as TView, useTheme} from 'tamagui';
 import {TouchableOpacity} from 'react-native';
-import {Plus} from '@tamagui/lucide-icons';
+import {Plus, ListFilter} from '@tamagui/lucide-icons';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import ProfileCardHeader from './ProfileCardHeader';
@@ -98,35 +98,47 @@ export default function ProfileSelector({deviceId}: {deviceId: string}) {
         <>
           <ProfileCardHeader deviceId={deviceId} />
           {DeviceState.refreshError && <Text color="$statusWarning" marginBottom={12}>{t('ui_refresh_failed')}</Text>}
-          {profiles.length > 1 && orderKey && <TouchableOpacity testID="profile-sort" accessibilityRole="button"
-            disabled={isLoading || DeviceState.switchSyncing || DeviceState.refreshError}
-            onPress={() => navigation.navigate('ProfileOrder', {deviceId, eid: DeviceState.eid})}
-            style={{minHeight: 48, justifyContent: 'center', alignSelf: 'flex-end'}}>
-            <Text color="$primaryColor">{t('ui_sort_profiles')}</Text>
-          </TouchableOpacity>}
-          <XStack alignItems="center" justifyContent="space-between" gap={8} marginBottom={12}>
-            <Text color="$textDefault" fontSize={18} fontWeight="600" flex={1}>
+          <XStack alignItems="center" justifyContent="space-between" gap={6} marginTop={4} marginBottom={12}>
+            <Text color="$textDefault" fontSize={18} fontWeight="600" flexShrink={1} numberOfLines={1}>
               {t('ui_installed_profiles', {count: profiles.length})}
             </Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('ui_add_profile')}
-              disabled={isLoading}
-              onPress={() => navigation.navigate('Scanner', {deviceId})}
-              style={{
-                minHeight: 48,
-                paddingHorizontal: 12,
-                borderRadius: 12,
-                backgroundColor: theme.primaryColor?.val,
-                justifyContent: 'center',
-              }}>
-              <XStack alignItems="center" gap={6}>
-                <Plus size={19} color={theme.btnForeground?.val} />
-                <Text fontSize={14} color="$btnForeground" fontWeight="600">
-                  {t('ui_add')}
-                </Text>
-              </XStack>
-            </TouchableOpacity>
+            <XStack alignItems="center" gap={5} flexShrink={0}>
+              {profiles.length > 1 && orderKey && (
+                <TouchableOpacity
+                  testID="profile-sort"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('ui_sort_profiles')}
+                  disabled={isLoading || DeviceState.switchSyncing || DeviceState.refreshError}
+                  onPress={() => navigation.navigate('ProfileOrder', {deviceId, eid: DeviceState.eid})}
+                  style={{minHeight: 44, paddingHorizontal: 3, alignItems: 'center', justifyContent: 'center'}}>
+                  <XStack alignItems="center" gap={5}>
+                    <ListFilter size={17} color={theme.color6?.val} />
+                    <Text color="$textDefault" fontSize={13} numberOfLines={1}>
+                      {t('ui_sort_profiles')}
+                    </Text>
+                  </XStack>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={t('ui_add_profile')}
+                disabled={isLoading}
+                onPress={() => navigation.navigate('Scanner', {deviceId})}
+                style={{
+                  minHeight: 44,
+                  paddingHorizontal: 10,
+                  borderRadius: 11,
+                  backgroundColor: theme.primaryColor?.val,
+                  justifyContent: 'center',
+                }}>
+                <XStack alignItems="center" gap={6}>
+                  <Plus size={19} color={theme.btnForeground?.val} />
+                  <Text fontSize={14} color="$btnForeground" fontWeight="600">
+                    {t('ui_add')}
+                  </Text>
+                </XStack>
+              </TouchableOpacity>
+            </XStack>
           </XStack>
         </>
       }

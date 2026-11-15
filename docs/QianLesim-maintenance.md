@@ -170,3 +170,9 @@ TypeScript、25 套件 181 项 Jest 与定向 ESLint 通过；新增真实模拟
 第二轮 [43593027791](https://github.com/meetjor/NekokoLPA/actions/runs/43593027791) 未发布。Android 15 深色拖动、返回取消、完成保存及进程重启保持顺序全部通过；`dark-updates-browser.txt` 与 ActivityTaskManager 日志确认实际跳到 Chrome。随后 Chrome 的 FirstRunActivity 抢回焦点，`am start -W` 返回应用命令等待 30 秒超时；最后截图停在 Chrome 欢迎页，没有 QianLesim 崩溃证据。
 
 调整仅限测试脚本：外部浏览器断言通过后 force-stop 模拟器 Chrome，保留 QianLesim 进程，以非阻塞启动加实际 UI 等待恢复设置页，继续检查原失败状态和成功重试。无需登录浏览器、接受引导或下载模拟 APK。正式应用代码、签名和版本不变；后续仍须 Android 14/15 完整门禁通过。
+
+## 2026-11-14 · 1.1.6 UI-only 首页排版调整
+
+用户表示 1.1.5 截图里“排列顺序”位置突兀、图标/顶部大按钮太宽大，明确指定助手此前生成的一张**深色单屏**效果图，要求尽量一模一样、不擅自调整。因 Work 额度限制，授权当前助手直接 GitHub 修改和构建，交接规范必须更新。
+
+版本 1.1.6 / 411；仅改首页工具区、卡槽尺寸、eUICC 信息卡、配置标题行动线、配置行间距和中文“调整顺序”文案。**严格不碰** LPA/Redux/Android、三证书签名、排序实现、开关与通知/下载逻辑。详见 [1.1.6 发布说明](releases/1.1.6.md)。测试和发布以本轮 Actions/Release 实际证据为准；源代码提交不是成功构建，也不能代替真机检查。

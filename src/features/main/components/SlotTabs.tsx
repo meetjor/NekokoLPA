@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
 import {Text, XStack, useTheme} from 'tamagui';
-import {Bluetooth} from '@tamagui/lucide-icons';
+import {Bluetooth, ChevronDown} from '@tamagui/lucide-icons';
 import {useTranslation} from 'react-i18next';
 
 export interface SlotTab {
@@ -28,7 +28,7 @@ export default function SlotTabs({
   const theme = useTheme();
   const {t} = useTranslation('main');
   return (
-    <XStack marginHorizontal={20} marginVertical={8} alignItems="center" gap={8}>
+    <XStack marginHorizontal={20} marginVertical={6} alignItems="center" gap={8}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -47,26 +47,29 @@ export default function SlotTabs({
                 tab.available === false ? ` · ${t('ui_unavailable')}` : ''
               }`}
               style={{
-                minHeight: 48,
+                minHeight: 44,
                 maxWidth: 240,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 10,
                 justifyContent: 'center',
                 borderRadius: 12,
                 borderWidth: 1,
                 backgroundColor: active ? theme.surfaceSpecial?.val : theme.background?.val,
                 borderColor: active ? theme.primaryColor?.val : theme.borderColor?.val,
               }}>
-              <Text
-                numberOfLines={1}
-                fontSize={14}
-                fontWeight={active ? '600' : '400'}
-                color={
-                  tab.available === false ? '$color9' : active ? '$primaryColor' : '$textDefault'
-                }>
-                {tab.label}
-                {tab.available === false ? ` · ${t('ui_unavailable')}` : ''}
-              </Text>
+              <XStack alignItems="center" gap={8}>
+                <Text
+                  numberOfLines={1}
+                  fontSize={14}
+                  fontWeight={active ? '600' : '400'}
+                  color={
+                    tab.available === false ? '$color9' : active ? '$primaryColor' : '$textDefault'
+                  }>
+                  {tab.label}
+                  {tab.available === false ? ` · ${t('ui_unavailable')}` : ''}
+                </Text>
+                {active && tabs.length > 1 && <ChevronDown size={17} color={theme.color6?.val} />}
+              </XStack>
             </TouchableOpacity>
           );
         })}
@@ -77,15 +80,15 @@ export default function SlotTabs({
           accessibilityLabel={t('bluetooth_scan')}
           onPress={onBluetooth}
           style={{
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 12,
             backgroundColor: theme.surfaceRow?.val,
           }}>
           <Bluetooth
-            size={21}
+            size={19}
             color={bluetoothActive ? theme.primaryColor?.val : theme.color6?.val}
           />
         </TouchableOpacity>

@@ -236,7 +236,7 @@ const ProfileRowComponent = ({
       overshootFriction={8}
       friction={2}
       containerStyle={{backgroundColor: theme.surfaceRow?.val}}>
-      <YStack backgroundColor="$surfaceRow" paddingHorizontal={14} paddingVertical={15}>
+      <YStack backgroundColor="$surfaceRow" paddingHorizontal={14} paddingVertical={11}>
         {profile.selected && (
           <YStack
             position="absolute"
@@ -249,17 +249,17 @@ const ProfileRowComponent = ({
         )}
         <XStack width="100%" alignItems="center" gap={10}>
           <YStack
-            width={40}
-            height={40}
+            width={38}
+            height={38}
             borderRadius={radius.md}
             backgroundColor="$surfaceSpecial"
             alignItems="center"
             justifyContent="center"
             overflow="hidden">
             {iconUri ? (
-              <Image style={{width: 36, height: 36}} source={{uri: iconUri}} resizeMode="contain" />
+              <Image style={{width: 34, height: 34}} source={{uri: iconUri}} resizeMode="contain" />
             ) : (
-              <Smartphone size={22} color={theme.primaryColor?.val as string} />
+              <Smartphone size={20} color={theme.primaryColor?.val as string} />
             )}
           </YStack>
 
@@ -289,7 +289,7 @@ const ProfileRowComponent = ({
                 displaySubtitle={displaySubtitle}
                 stealthMode={stealthMode}
               />
-              <XStack alignItems="center" gap={7} paddingTop={5}>
+              <XStack alignItems="center" gap={7} paddingTop={3}>
                 <YStack
                   width={8}
                   height={8}

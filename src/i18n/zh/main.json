@@ -280,7 +280,7 @@
   "discovery_found": "已找到 SM-DP+。",
   "discovery_empty": "未找到服务器。",
   "discovery_multiple": "找到多个 SM-DP+ 服务器，已选择第一个。",
-  "ui_sort_profiles": "排列顺序",
+  "ui_sort_profiles": "调整顺序",
   "ui_sort_hint": "长按手柄拖动，也可使用上下箭头。点击完成保存；返回不保存。只调整本机显示顺序。",
   "ui_sort_unavailable": "卡片暂不可用，请返回并重新读取后再排序。",
   "ui_sort_save_failed": "顺序保存失败，请重试。",

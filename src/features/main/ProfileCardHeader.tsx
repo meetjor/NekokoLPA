@@ -82,24 +82,24 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
         borderWidth={1}
         borderColor="$borderColor"
         alignItems="center"
-        marginTop={4}
+        marginTop={2}
         marginBottom={16}>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={t('ui_device_details')}
           onPress={details}
-          style={{flex: 1, padding: 16, minHeight: 88}}>
+          style={{flex: 1, padding: 12, minHeight: 76}}>
           <XStack alignItems="center" gap={12}>
             <YStack
               backgroundColor="$surfaceSpecial"
-              width={42}
-              height={42}
+              width={38}
+              height={38}
               borderRadius={12}
               alignItems="center"
               justifyContent="center">
-              <Cpu size={23} color={theme.primaryColor?.val} />
+              <Cpu size={21} color={theme.primaryColor?.val} />
             </YStack>
-            <YStack flex={1} minWidth={0} gap={5}>
+            <YStack flex={1} minWidth={0} gap={4}>
               <Text color="$textDefault" fontSize={17} fontWeight="600" numberOfLines={1}>
                 {adapter.device.displayName} · eUICC
               </Text>
@@ -118,7 +118,7 @@ export default function ProfileCardHeader({deviceId}: {deviceId: string}) {
           accessibilityLabel={t('ui_device_actions')}
           onPress={() => setOpen(true)}
           disabled={isLoading}
-          style={{width: 48, minHeight: 64, alignItems: 'center', justifyContent: 'center'}}>
+          style={{width: 48, minHeight: 56, alignItems: 'center', justifyContent: 'center'}}>
           <MoreHorizontal size={23} color={theme.color6?.val} />
         </TouchableOpacity>
       </XStack>
